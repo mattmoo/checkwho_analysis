@@ -8,6 +8,13 @@ draw.regression.table <- function(models,
                                   model.names = NULL,
                                   coefs = NULL) {
   
+  # Convert to list if required.
+  if (!'list' %in% class(models)) {
+    models = list(models)
+  }
+  # Rename only present coefficients to avoid error.
+  coefs = coefs[coefs %in% unique(unlist(lapply(X = models, FUN = function(x) names(x$coefficients))))]
+  
   t = export_summs(
     models,
     model.names = model.names,

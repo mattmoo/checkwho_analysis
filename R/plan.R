@@ -10,13 +10,6 @@ moh.event.dt.filename = 'rerun_CheckWHO_pus10784_events_IdEncrypted.csv'
 moh.nnpac.dt.filename = 'nap0917_nap0917_IdEncrypted.csv'
 adhb.event.op.patient.dt.filename = '19123 Level 8 Theatre Events_Data_IdEncrypted.csv'
 
-# Some older events, only first event per period per patient. 
-base.revision.one.input.directory = 'P:/FMHSfiles/SCIENCE/CheckWHO/data/derived/older_data/encrypted_id_source/'
-adhb.revision.one.event.op.patient.dt.filename = 'indexEventsACH_IdEncrypted.csv'
-moh.revision.one.patient.dt.filename = 'nhidata_MOH_IdEncrypted.csv'
-moh.revision.one.event.dt.filename = 'events_MOH_IdEncrypted.csv'
-figureDaohData.filename = 'figureDaohData.csv'
-
 base.moh.lookup.directory = 'P:/FMHSfiles/SCIENCE/MOH_general/'
 facility.lookup.dt.filename = 'facility/facilities20180501.csv'
 icd10.am3.lookup.dt.filename = 'icd/csv_output/icd10_am3.csv'
@@ -38,8 +31,12 @@ checkwho_plan =
     
     template.docx.filein = 'P:/FMHSfiles/WRITING/blankTemplate.docx',
     report.output.dir = 'P:/FMHSfiles/SCIENCE/CheckWHO/reports',
-    report.docx.filein = file_in('P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.2.1.docx'),
+    report.docx.filein = file_in('P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.3.2.docx'),
     
+    # The first revision had a wee issue where all of the events were the first
+    # per patient per period. If this is FALSE, replicate that. If TRUE, get a
+    # random event instead (as per the time series).
+    random.pre.post = FALSE,
     
     daoh.limits = c(0,89),
     
@@ -68,22 +65,9 @@ checkwho_plan =
       # 'CCI',
       'ethnicity',
       # 'acuity',
+      # 'clinical.severity',
       'icd.chapter.grouped'
     ),
-    
-    ineligible.chapters = c('Noninvasive, cognitive and Other Interventions, Not Elsewhere Classified',
-                            'Imaging Services',
-                            'Procedures on Eye and Adnexa',
-                            'Radiation Oncology Procedures'),
-    ineligible.procedure.strings = c('dialysis',
-                                     'catheter',
-                                     'shunt',
-                                     'stent',
-                                     'ventilatory support',
-                                     'CPAP'),
-
-    # ineligible.chapters = c(),
-    # ineligible.procedure.strings = c(),
     
     
     daoh.covariates = mortality.covariates,
@@ -314,12 +298,7 @@ checkwho_plan =
     moh.event.raw.dt = fread(file.path(moh.input.directory, moh.event.dt.filename)),
     moh.nnpac.raw.dt = fread(file.path(moh.input.directory, moh.nnpac.dt.filename)),
     adhb.event.op.patient.raw.dt = fread(file.path(adhb.input.directory, adhb.event.op.patient.dt.filename)),
-    
-    moh.revision.one.event.raw.dt = fread(file.path(base.revision.one.input.directory, moh.revision.one.event.dt.filename)),
-    moh.revision.one.patient.raw.dt = fread(file.path(base.revision.one.input.directory, moh.revision.one.patient.dt.filename)),
-    adhb.revision.one.event.op.patient.raw.dt = fread(file.path(base.revision.one.input.directory, adhb.revision.one.event.op.patient.dt.filename)),
-    figureDaohData = fread(file.path(base.revision.one.input.directory,figureDaohData.filename)),
-    
+
     # Read lookup tables.
     facility.lookup.dt = fread(file.path(base.moh.lookup.directory, 
                                          facility.lookup.dt.filename)),
@@ -327,6 +306,11 @@ checkwho_plan =
                                     y = icd10amachi::icd10achi.chapter.dt,
                                     by = c('CLIN_SYS','chapter_code'),
                                     all.x = TRUE),
+    
+    op.forward.mapping.dt = icd10amachi::generate.mapping.dt(CLIN_SYS_current_vector = 12,
+                                                             CLIN_SYS_target = 14,
+                                                             restrict_clinical_code_type_from = 'O'), 
+    
     # diag.lookup.dt = fread(file.path(base.moh.lookup.directory, diag.lookup.dt.filename)),
     # icd10.am3.lookup.dt = fread(file.path(base.moh.lookup.directory, icd10.am3.lookup.dt.filename)),
     # op.lookup.dt = icd10.am3.lookup.dt[clinical.code.type == 'O', .(
@@ -350,12 +334,10 @@ checkwho_plan =
     moh.diag.op.dt = clean.moh.diag.op.dt(moh.diag.op.raw.dt),
     moh.event.dt = clean.moh.event.dt(moh.event.raw.dt),
     moh.nnpac.dt = clean.moh.nnpac.dt(moh.nnpac.raw.dt), 
-    
-    moh.revision.one.patient.dt = clean.moh.revision.one.patient.dt(moh.revision.one.patient.raw.dt),
-    adhb.revision.one.event.op.patient.dt = clean.adhb.revision.one.event.op.patient.dt(adhb.revision.one.event.op.patient.raw.dt),
-    
-    #Extract operations from operations, causes, and diagnoses
-    moh.op.dt = generate.moh.op.dt(moh.diag.op.dt, op.lookup.dt),
+
+    #Extract operations from operations, causes, and diagnoses. Also forward map
+    #to get the clinical severity scores.
+    moh.op.dt = generate.moh.op.dt(moh.diag.op.dt, op.lookup.dt, op.forward.mapping.dt),
     # moh.diag.dt = generate.moh.diag.dt(moh.diag.op.dt, diag.lookup.dt),
     
     # Clean ADHB data. It's all provided in one file, so kind of messy.
@@ -365,28 +347,24 @@ checkwho_plan =
     adhb.op.dt = clean.adhb.op.dt(adhb.event.op.patient.dt),
     adhb.patient.dt = clean.adhb.patient.dt(adhb.event.op.patient.dt),
     
-    # Get the equivalent of the older events, where no patients younger than 16
-    # were provided, and only the first operation from each patient in each
-    # period was taken further. 
-    # The Revision One data is just used to compare, shouldn't be reused, as the
-    # databases have changed since.
-    adhb.revision.one.recalculated.event.op.patient.dt = generate.adhb.revision.one.recalculated.event.op.patient.dt(
-      adhb.event.op.patient.dt,
-      pre.period.start,
-      pre.period.end,
-      post.period.start,
-      post.period.end,
-      adhb.revision.one.event.op.patient.dt
-    ),
-    # adhb.revision.one.recalculated.event.op.patient.dt = clean.adhb.revision.one.recalculated.event.op.patient.dt(adhb.revision.one.recalculated.event.op.patient.raw.dt),
-    adhb.revision.one.recalculated.event.dt = clean.adhb.event.dt(adhb.revision.one.recalculated.event.op.patient.dt),
-    # adhb.revision.one.event.dt = clean.adhb.revision.one.recalculated.event.dt(adhb.revision.one.event.op.patient.dt),
-    adhb.revision.one.recalculated.theatre.event.dt = clean.adhb.theatre.event.dt(adhb.revision.one.recalculated.event.op.patient.dt),
-    adhb.revision.one.recalculated.op.dt = clean.adhb.op.dt(adhb.revision.one.recalculated.event.op.patient.dt),
-    adhb.revision.one.recalculated.patient.dt = clean.adhb.patient.dt(adhb.revision.one.recalculated.event.op.patient.dt),
-    
     # Get ASA from operation codes
     asa.dt = generate.asa.dt(moh.op.dt),
+    
+    # Max block clinical severity per event opdate, and associated ICD
+    # chapter. If there are ties, get the first by DIAG_SEQ.
+    max.clin.sev.dt = moh.op.dt[, .SD[block.clinical.severity == max(block.clinical.severity),
+                                      .(
+                                        DIAG_SEQ,
+                                        max.block.clinical.severity = block.clinical.severity,
+                                        code.procedure = CLIN_CD,
+                                        desc.procedure,
+                                        code.chapter,
+                                        desc.chapter
+                                      )][order(DIAG_SEQ)][1], by = .(EVENT_ID, OP_ACDTE)],
+    
+    # Also  min block clinical severity 
+    min.clin.sev.dt = moh.op.dt[, .(min.block.clinical.severity = min(block.clinical.severity)),
+                                by = .(EVENT_ID, OP_ACDTE)],
     
     # Get event and opdate combinations.
     event.opdate.dt = generate.event.opdate.dt(adhb.event.dt, 
@@ -395,45 +373,14 @@ checkwho_plan =
                                                asa.dt,
                                                facility.lookup.dt,
                                                ethnicity.lookup.dt,
-                                               ineligible.chapters,
-                                               ineligible.procedure.strings),
+                                               max.clin.sev.dt,
+                                               min.clin.sev.dt),
     
-    # Also do a merge on the basis of patient and opdate, as per Revision 1.
-    revision.one.recalculated.event.opdate.dt = generate.revision.one.event.opdate.dt(
-      adhb.revision.one.recalculated.theatre.event.dt,
-      adhb.revision.one.recalculated.event.dt,
-      moh.event.dt,
-      moh.op.dt,
-      asa.dt,
-      facility.lookup.dt,
-      ethnicity.lookup.dt,
-      ineligible.chapters,
-      ineligible.procedure.strings,
-      pre.period.start,
-      pre.period.end,
-      post.period.start,
-      post.period.end
-    ),
-    
+
     # Generate table with variables for assessing eligibility.
     eligibility.dt = generate.eligibility.dt(
       event.opdate.dt,
-      adhb.op.dt,
-      moh.patient.dt,
-      moh.op.dt,
-      min.date,
-      max.date,
-      pre.period.start,
-      pre.period.end,
-      post.period.start,
-      post.period.end
-    ), 
-    
-    
-    # Generate table with variables, but only for pre/post based on Revision One
-    pre.post.eligibility.dt = generate.pre.post.eligibility.dt(
-      revision.one.recalculated.event.opdate.dt,
-      adhb.op.dt,
+      adhb.theatre.event.dt,
       moh.patient.dt,
       moh.op.dt,
       min.date,
@@ -442,13 +389,12 @@ checkwho_plan =
       pre.period.end,
       post.period.start,
       post.period.end,
-      # adhb.revision.one.event.dt,
-      figureDaohData
+      random.pre.post
     ), 
+    
     
     # Apply eligibility for both analyses.
     index.event.dt = generate.index.event.dt(eligibility.dt),
-    pre.post.index.event.dt = generate.pre.post.index.event.dt(pre.post.eligibility.dt),
     
     # Compile the different hospitalisation data sources.
     hospitalisation.dt = generate.hospitalisation.dt(moh.event.dt, 
@@ -460,10 +406,6 @@ checkwho_plan =
                                moh.patient.dt,
                                hospitalisation.dt,
                                daoh.limits),
-    pre.post.daoh.dt = generate.daoh.dt(pre.post.index.event.dt,
-                                        moh.patient.dt,
-                                        hospitalisation.dt,
-                                        daoh.limits), 
     
     monthly.summary.dt = generate.monthly.summary.dt(daoh.dt[time.series.eligible.and.unique == TRUE]),
     
@@ -480,11 +422,6 @@ checkwho_plan =
                                            adhb.patient.dt,
                                            event.opdate.dt),
     
-    pre.post.regression.dt = generate.regression.dt(pre.post.daoh.dt,
-                                                    moh.patient.dt,
-                                                    adhb.revision.one.recalculated.patient.dt,
-                                                    revision.one.recalculated.event.opdate.dt),
-
     # Generate a quantile regression model for risk adjustment. The model will
     # be calculated from the larger time series data, but applied also to the
     # per/post data, which are mainly a subset.
@@ -519,15 +456,9 @@ checkwho_plan =
       mort.30.risk.adjust.model
     ), 
     
-    pre.post.risk.adjusted.regression.dt = risk.adjust.regression.dt(
-      pre.post.regression.dt,
-      daoh.risk.adjust.model,
-      mort.90.risk.adjust.model,
-      mort.30.risk.adjust.model
-    ), 
     
     # Data.table for generating figures etc.
-    pre.post.figure.dt = generate.pre.post.figure.dt(pre.post.risk.adjusted.regression.dt),
+    pre.post.figure.dt = generate.pre.post.figure.dt(risk.adjusted.regression.dt),
     time.series.figure.dt = generate.time.series.figure.dt(risk.adjusted.regression.dt,
                                                            ssc.implementation.start,
                                                            ssc.implementation.end),
@@ -596,8 +527,8 @@ checkwho_plan =
       y.breaks = seq(0, 1, 0.05),
       x.lims = NULL,
       x.title = "Year",
-      y.title = "Percentage DAOH equalling or exceeding overall percentile",
-      legend.title = "Exceeds overall DAOH",
+      y.title = "Percentage risk-adjusted DAOH equalling or exceeding overall percentile",
+      legend.title = "Exceeds overall risk-adjusted DAOH",
       legend.labels.rename = c(exceeds.daoh.risk.adj.10 = '10%',
                                exceeds.daoh.risk.adj.25 = '25%',
                                exceeds.daoh.risk.adj.median = '50%',
@@ -616,9 +547,6 @@ checkwho_plan =
                             'exceeds.daoh.risk.adj.75'),
       round.unit = '3 month',
       ci.method = "clopper-pearson"),
-    
-    
-    
     
     daoh.risk.adj.exceedance.time.plot = draw.binary.time.plot(
       daoh.risk.adj.exceedance.time.summary.dt,
@@ -714,24 +642,27 @@ checkwho_plan =
       "Asian (vs M\u101ori)" = 'ethnicityAsian',
       "Pacific Peoples (vs M\u101ori)" = 'ethnicityPacific Peoples',
       "Other ethnicity (vs M\u101ori)" = 'ethnicityOther',
-      'Digestive system (vs Ortho)' = 'icd.chapter.groupedProcedures on Digestive System',
-      'Urinary system (vs Ortho)' = 'icd.chapter.groupedProcedures on Urinary System',
-      'Nervous system (vs Ortho)' = 'icd.chapter.groupedProcedures on Nervous System',
-      'Cardiovascular system (vs Ortho)' = 'icd.chapter.groupedProcedures on Cardiovascular System',
-      'Dermatological and plastic (vs Ortho)' = 'icd.chapter.groupedDermatological and Plastic Procedures',
-      'Male genital organs (vs Ortho)' = 'icd.chapter.groupedProcedures on Male Genital Organs',
+      'Surgical complexity 2 (vs 1)' = 'clinical.severity2',
+      'Surgical complexity 3 (vs 1)' = 'clinical.severity3',
+      'Surgical complexity 4 (vs 1)' = 'clinical.severity4',
+      'Surgical complexity 5 (vs 1)' = 'clinical.severity5',
+      'Gastro (vs Ortho)' = 'icd.chapter.groupedProcedures on Digestive System',
+      'Urinary (vs Ortho)' = 'icd.chapter.groupedProcedures on Urinary System',
+      'Neuro (vs Ortho)' = 'icd.chapter.groupedProcedures on Nervous System',
+      'Vascular (vs Ortho)' = 'icd.chapter.groupedProcedures on Cardiovascular System',
+      'Urology (vs Ortho)' = 'icd.chapter.groupedProcedures on Male Genital Organs',
       'Other (vs Ortho)' = 'icd.chapter.groupedOther'
     ),
     
     rename.interaction.coefficients.list = c(
-      'SSC * Gastro' = 'SSCPost:icd.chapter.groupedProcedures on Digestive System',
-      'SSC * Uro' = 'SSCPost:icd.chapter.groupedProcedures on Urinary System',
-      'SSC * Neuro' = 'SSCPost:icd.chapter.groupedProcedures on Nervous System',
-      'SSC * Cardio' = 'SSCPost:icd.chapter.groupedProcedures on Cardiovascular System',
-      'SSC * Derma' = 'SSCPost:icd.chapter.groupedDermatological and Plastic Procedures',
-      'SSC * Andro' = 'SSCPost:icd.chapter.groupedProcedures on Male Genital Organs',
-      'SSC * Other' = 'SSCPost:icd.chapter.groupedOther',
       'SSC * Acute' = 'SSCPost:asa.acuityAcute',
+      'SSC * ASA2' = 'SSCPost:asa.statusASA 2',
+      'SSC * ASA3' = 'SSCPost:asa.statusASA 3',
+      'SSC * ASA4-5' = 'SSCPost:asa.statusASA 4-5',
+      'SSC * Severity 2' = 'SSCPost:clinical.severity2',
+      'SSC * Severity 3' = 'SSCPost:clinical.severity3',
+      'SSC * Severity 4' = 'SSCPost:clinical.severity4',
+      'SSC * Severity 5' = 'SSCPost:clinical.severity5',
       'SSC * 34-48yo' = 'SSCPost:age.group34-48',
       'SSC * 49-64yo' = 'SSCPost:age.group49-64',
       'SSC * 65-78yo' = 'SSCPost:age.group65-78',
@@ -747,31 +678,34 @@ checkwho_plan =
                   'ethnicityPacific Peoples',
                   'ethnicityOther'),
       group.2 = c('acuityAcute',
-                  'age.group34-48',
+                  'clinical.severity2',
+                  'clinical.severity3',
+                  'clinical.severity4',
+                  'clinical.severity5'),
+      group.3 = c('age.group34-48',
                   'age.group49-64',
                   'age.group65-78',
                   'age.group79+'),
-      group.3 = c('asa.statusASA 2',
-                  'asa.statusASA 3',
-                  'asa.statusASA 4-5'),
       group.4 = c('icd.chapter.groupedProcedures on Digestive System',
                   'icd.chapter.groupedProcedures on Urinary System',
                   'icd.chapter.groupedProcedures on Nervous System',
                   'icd.chapter.groupedProcedures on Cardiovascular System',
-                  'icd.chapter.groupedDermatological and Plastic Procedures',
                   'icd.chapter.groupedProcedures on Male Genital Organs',
-                  'icd.chapter.groupedOther')
+                  'icd.chapter.groupedOther'),
+      group.5 = c('asa.statusASA 2',
+                  'asa.statusASA 3',
+                  'asa.statusASA 4-5')
     ),
     
     group.interaction.coefficients.list = list(
-      group.5 = c('SSCPost:icd.chapter.groupedProcedures on Digestive System',
-                  'SSCPost:icd.chapter.groupedProcedures on Urinary System',
-                  'SSCPost:icd.chapter.groupedProcedures on Nervous System',
-                  'SSCPost:icd.chapter.groupedProcedures on Cardiovascular System',
-                  'SSCPost:icd.chapter.groupedDermatological and Plastic Procedures',
-                  'SSCPost:icd.chapter.groupedProcedures on Male Genital Organs',
-                  'SSCPost:icd.chapter.groupedOther',
-                  'SSCPost:asa.acuityAcute',
+      group.5 = c('SSCPost:asa.acuityAcute',
+                  'SSCPost:asa.statusASA 2',
+                  'SSCPost:asa.statusASA 3',
+                  'SSCPost:asa.statusASA 4-5',
+                  'SSCPost:clinical.severity2',
+                  'SSCPost:clinical.severity3',
+                  'SSCPost:clinical.severity4',
+                  'SSCPost:clinical.severity5',
                   'SSCPost:age.group34-48',
                   'SSCPost:age.group49-64',
                   'SSCPost:age.group65-78',
@@ -839,7 +773,7 @@ checkwho_plan =
       family = 'binomial'
     ),
     
-    mort.30.regression.plot = draw.binary.regression.plot(
+    mort.30.regression.plot = draw.regression.plot(
       models = mort.30.regression.model,
       coefs = rename.coefficients.list,
       groups = group.coefficients.list),
@@ -873,7 +807,7 @@ checkwho_plan =
       model.names = c('30-day mortality',
                       '90-day mortality')),
   
-    mort.regression.abbreviated.plot = draw.binary.regression.plot(
+    mort.regression.abbreviated.plot = draw.regression.plot(
       models = list(mort.30.regression.model,
                     mort.90.regression.model),
       coefs = c('SSC (vs Pre-SSC)' = 'SSCPost'),
@@ -895,8 +829,9 @@ checkwho_plan =
     daoh.interaction.test.dt = generate.interaction.test.dt(
       models = daoh.regression.models.initial
     ),
-    
+
     final.daoh.covariates = c(daoh.covariates, unique(daoh.interaction.test.dt[pvalue.fdr < 0.05, interaction.term])),
+    # final.daoh.covariates = c(daoh.covariates),
     
     # DAOH regression, but with any interaction terms.
     daoh.regression.models = generate.quantile.regression.models(
@@ -1109,7 +1044,7 @@ checkwho_plan =
     eligibility.figure.numbers.dt = generate.eligibility.figure.numbers.dt(
       eligibility.dt,
       eligibility.factor.vector = c(
-        "unique.moh.event.opdate",
+        "moh.event.opdate.matched",
         "matched.moh.patient",
         "after.min.date",
         "before.max.date",
@@ -1121,30 +1056,14 @@ checkwho_plan =
         "overlapping.op.and.admission",
         # "first.operation.adhb",
         "has.asa",
+        "alive.on.op.date",
         "not.asa.6",
-        "alive.on.op.date"
+        "no.donor.operation",
+        "first.eligible.operation.adhb"
+        
       )
     ),
     
-    pre.post.eligibility.figure.numbers.dt = generate.pre.post.eligibility.figure.numbers.dt(
-      pre.post.eligibility.dt,
-      eligibility.factor.vector = c(
-        "unique.moh.event.opdate",
-        "matched.moh.patient",
-        # "after.min.date",
-        # "before.max.date",
-        "age.older.than.16",
-        "recorded.ethnicity",
-        # "has.operation.adhb",
-        "has.operation.moh",
-        # "eligible.procedure",
-        "overlapping.op.and.admission",
-        # "first.operation.adhb",
-        "has.asa",
-        "not.asa.6",
-        "alive.on.op.date"
-      )
-    ),
     
     publication.table.demographics = generate.publication.table(
       name = 'groupSummary',
@@ -1158,9 +1077,9 @@ checkwho_plan =
       name = 'rawPlot',
       input.plot = daoh.mortality.plot,
       caption = paste0(
-        "Distribution of DAOH\u2089\u2080 for Extended period (light grey). ",
-        "Overlaid in dark grey is the distribution for procedures where the patient died during the 90-day follow-up period. ",
-        "Note square root transform on y-axis."
+        "Distribution of DAOH\u2089\u2080 for Extended Period (light grey). ",
+        "Overlaid in dark grey is the distribution for procedures where the patient diedduring the 90 days following their index procedure having spent at least some days alive and out of hospital. "
+        ,"Note the square root transform on y-axis."
       ),
       aspect.ratio = 1.5
     ),
@@ -1168,12 +1087,11 @@ checkwho_plan =
     publication.table.comprehensive.daoh.summary = generate.publication.table(
       name = 'daohTab',
       input.table = comprehensive.daoh.summary.ht,
-      caption = paste0("DAOH\u2089\u2080 for the three periods, both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC groups. ",
-                       "Differences in the overall DAOH\u2089\u2080 distribution were assessed using Wilcoxon-Mann-Whitney U tests. ",
-                       "Differences in other values were assessed using absolute difference. ",
+      caption = paste0("DAOH\u2089\u2080 for the Exptended Period (Extended), the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
+                       "Differences in the overall DAOH₉₀ distribution were assessed using Wilcoxon-Mann-Whitney U tests. Differences in other values were assessed using absolute difference. ",
                        "P-values were generated using permutation tests with ",
-                       format(n.iterations.for.perm.tests, big.mark = ','),
-                       " permutations. ")
+                       format(n.iterations.for.perm.tests, big.mark = ','),  
+                       " permutations. SSC = Surgical Safety Checklist.")
     ),
     
     publication.figure.daoh.risk.adj = generate.publication.figure(
@@ -1181,7 +1099,7 @@ checkwho_plan =
       input.plot = daoh.risk.adj.pre.post.plot,
       caption = paste0("Distribution of risk-adjusted DAOH\u2089\u2080 for both Pre-SSC and Post-SSC periods. ",
                        "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
-                       "Note square root transform of y-axis, to facilitate comparisons at intermediate DAOH\u2089\u2080 values."),
+                       "Note the square root transform of y-axis, to facilitate comparisons at intermediate DAOH\u2089\u2080 values."),
       aspect.ratio = 1.5
     ),
     
@@ -1190,7 +1108,7 @@ checkwho_plan =
       input.plot = daoh.pre.post.plot,
       caption = paste0("Distribution of unadjusted DAOH\u2089\u2080 for both Pre-SSC and Post-SSC periods. ",
                        "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
-                       "Note square root transform of y-axis, to facilitate comparisons at intermediate DAOH\u2089\u2080 values."),
+                       "Note the square root transform of y-axis, to facilitate comparisons at intermediate DAOH\u2089\u2080 values."),
       aspect.ratio = 1.5
     ),
     
@@ -1233,7 +1151,7 @@ checkwho_plan =
       name = 'daohRegSSC',
       input.plot = daoh.regression.abbreviated.plot,
       caption = paste0(
-        "DAOH\u2089\u2080 Pre-SSC vs Post-SSC periods in a multivariate quantile regression model, fitted at 0.1, 0.25, 0.5, and 0.75 quantiles. ",
+        "Difference in DAOH\u2089\u2080 between the Post-SSC Period and the Pre-SSC Period in a multivariate quantile regression model, fitted at 0.1, 0.25, 0.5, and 0.75 quantiles. ",
         "Thin and thick bars respectively indicate 95% and 90% confidence intervals. ",
         "Full models are presented in TAB_daohReg_REF and FIG_daohReg_REF."
       ),
@@ -1257,7 +1175,7 @@ checkwho_plan =
       input.plot = daoh.exceedance.time.plot,
       caption = paste0(
         "Percentage of patients per quarter with risk-adjusted DAOH\u2089\u2080 exceeding specified quantiles. ",
-        "Preregistered Pre-SSC and post-SSC periods are shaded red and blue respectively, implementation period is shaded green."
+        "The registered Pre-SSC and Post-SSC periods are shaded red and blue respectively, the Implementation Period is shaded green."
       ),
       aspect.ratio = 1
     ),
@@ -1267,7 +1185,7 @@ checkwho_plan =
       input.plot = mortality.time.plot,
       caption = paste0(
         "Mortality (30-day and 90-day) per quarter. ",
-        "Preregistered Pre-SSC and post-SSC periods are shaded red and blue respectively, implementation period is shaded green."
+        "The registered Pre-SSC and Post-SSC periods are shaded red and blue respectively, the Implementation Period is shaded green."
       ),
       aspect.ratio = 1.5
     ),
@@ -1293,16 +1211,16 @@ checkwho_plan =
       input.table = bayes.testing.ht,
       caption = paste0(
         "Results of Bayesian changepoint analysis, including ",
-        "point estimate of first changepoint and 95% credible intervals, plus ",
-        "Bayes factors (BFs) comparing the hypothesis that the first changepoint was during the SSC implementation period, to that in which it was outside. "
+        "point estimate of first changepoint and 95% credible intervals, and ",
+        "Bayes factors (BFs) comparing the hypotheses that the first changepoint was during the SSC Implementation Period, that it was during the Post-SSC period, and that it was outside both periods. "
       )
     ), 
     
     publication.results.demographics = list(
-      adhb.event.op.patient.raw.dt[`Actual Into Theatre Date Time` > min.date & `Actual Into Theatre Date Time` < max.date,.N],
-      n.pre = pre.post.eligibility.dt[pre.eligible.and.unique == TRUE, .N],
-      n.post = pre.post.eligibility.dt[post.eligible.and.unique == TRUE, .N],
-      n.pre.post = pre.post.eligibility.dt[pre.post.unique == TRUE, .N],
+      n = adhb.theatre.event.dt[`Actual Into Theatre Date Time` >= min.date & `Actual Into Theatre Date Time` <= max.date,.N],
+      n.pre = eligibility.dt[pre.eligible.and.unique == TRUE, .N],
+      n.post = eligibility.dt[post.eligible.and.unique == TRUE, .N],
+      n.pre.post = eligibility.dt[pre.post.eligible.and.unique == TRUE, .N],
       n.time.series = time.series.figure.dt[,.N],
       p.maori = time.series.figure.dt[,.N, by = maori.ethnicity][,p := N/sum(N)]
       
@@ -1324,6 +1242,7 @@ checkwho_plan =
       pre.post.perm.90.p = as.numeric(comprehensive.daoh.summary.ht[19,6]),
       
       final.daoh.covariates = final.daoh.covariates,
+      interactions.dt = daoh.interaction.test.dt[pvalue.fdr < 0.05, interaction.term],
       
       pre.post.qr.10.diff = summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Value"],
       pre.post.qr.10.low = summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Value"] -
@@ -1363,6 +1282,7 @@ checkwho_plan =
       mort.30.day.post = pre.post.figure.dt[SSC == 'Post',.SD[,.N,by = mort.30.day][mort.30.day==TRUE,N]/.N][1],
 
       final.mortality.covariates = final.mortality.covariates,
+      interactions.dt = mort.interaction.test.dt[pvalue.fdr < 0.05, interaction.term],
       
       pre.post.mort.90.reg.or = exp(summary(mort.90.regression.model)$coefficients["SSCPost", "Estimate"]),
       pre.post.mort.90.reg.or.low = exp(

@@ -3,7 +3,7 @@
 ##' @title
 ##' @param models A binomial regression model, or list thereof.
 ##' @param coefs Coefficient names, as in jtools::plot_summs.
-##' @param model.names NAmes for labelling the models.
+##' @param model.names Names for labelling the models.
 ##' @param groups Groups of factors to make separate graphs for.
 ##' @param xbreaks Breaks on x-axis
 ##' @param ylabs Display y labels? You might want to remove them if there's only
@@ -17,6 +17,9 @@ draw.binary.regression.plot <- function(models,
   
   plot.func = function(mod,
                        plot.coefs) {
+    # Rename only present coefficients to avoid error.
+    plot.coefs = plot.coefs[plot.coefs %in% names(mod$coefficients)]
+    
     result = plot_summs(
       mod,
       inner_ci_level = .9,

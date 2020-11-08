@@ -27,15 +27,17 @@ generate.eligibility.figure.numbers.dt <- function(eligibility.dt,
   eligibility.dt[, ALL.PREV := TRUE]
   
   eligibility.figure.numbers.dt = rbind(
-    data.table(inclusion.criterion = 'adhb.L8.admissions', n = eligibility.dt[,length(unique(adhb.event.id))]),
-    data.table(inclusion.criterion = 'matched.to.moh.admission', n = eligibility.dt[!is.na(adhb.event.id) & !is.na(moh.event.id),length(unique(moh.event.id))]),
+    data.table(inclusion.criterion = 'adhb.L8.admissions', n = eligibility.dt[,length(unique(adhb.theatre.event.id))]),
+    # data.table(inclusion.criterion = 'matched.adhb.moh.event', n = eligibility.dt[!is.na(adhb.event.id) & !is.na(moh.event.id),length(unique(moh.event.id))]),
     assess.inclusion.criteria(eligibility.factor.vector),
-    data.table(inclusion.criterion = 'time.series.unique', n = eligibility.dt[time.series.eligible.and.unique == TRUE, .N])
-    # data.table(inclusion.criterion = 'in.pre.post.period', n = eligibility.dt[(in.pre.period == TRUE |
-    #                                                                             in.post.period == TRUE) & eligible == TRUE, .N]),
-    # data.table(inclusion.criterion = 'in.pre.post.period.unique', n = eligibility.dt[pre.eligible.and.unique | post.eligible.and.unique == TRUE, .N]),
-    # data.table(inclusion.criterion = 'in.pre.period.unique', n = eligibility.dt[pre.eligible.and.unique == TRUE, .N]),
-    # data.table(inclusion.criterion = 'in.post.period.unique', n = eligibility.dt[post.eligible.and.unique == TRUE, .N])
+    data.table(inclusion.criterion = 'time.series.unique', n = eligibility.dt[time.series.eligible.and.unique == TRUE, .N]),
+    data.table(inclusion.criterion = 'in.pre.post.period', n = eligibility.dt[(in.pre.period == TRUE |
+                                                                                in.post.period == TRUE) & eligible == TRUE, .N]),
+    data.table(inclusion.criterion = 'both.pre.post.eligible.first', n = eligibility.dt[both.pre.post.eligible.first == TRUE, .N]),
+    data.table(inclusion.criterion = 'in.pre.post.period.unique', n = eligibility.dt[pre.eligible.and.unique | post.eligible.and.unique == TRUE, .N]),
+    data.table(inclusion.criterion = 'in.pre.post.period.unique', n = eligibility.dt[pre.eligible.and.unique | post.eligible.and.unique == TRUE, .N]),
+    data.table(inclusion.criterion = 'in.pre.period.unique', n = eligibility.dt[pre.eligible.and.unique == TRUE, .N]),
+    data.table(inclusion.criterion = 'in.post.period.unique', n = eligibility.dt[post.eligible.and.unique == TRUE, .N])
   )
   
   eligibility.figure.numbers.dt[,diff:=n-shift(n,1,type="lag")]

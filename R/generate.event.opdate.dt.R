@@ -15,8 +15,8 @@ generate.event.opdate.dt <- function(adhb.event.dt,
                                      asa.dt,
                                      facility.lookup.dt,
                                      ethnicity.lookup.dt,
-                                     ineligible.chapters,
-                                     ineligible.procedure.strings
+                                     max.clin.sev.dt,
+                                     min.clin.sev.dt
                                      ) {
 
   # Attach facility name and DHB (not strictly necessary, could do it by code)
@@ -92,6 +92,13 @@ generate.event.opdate.dt <- function(adhb.event.dt,
                           all.x = TRUE
   )
   
+  # Attach unknown ASA scores, for replicating Revision 1 results where I
+  # accidentally excluded them.
+  setkey(event.opdate.dt, EVENT_ID, OP_ACDTE)
+  event.opdate.dt[,any.unknown.asa := FALSE]
+  event.opdate.dt[asa.dt[is.na(asa.status), .(moh.event.id, moh.op.date)],
+                  any.unknown.asa := TRUE]
+  
   
   # Attach acuity
   moh.event.dt[ADM_TYPE == 'AC', acuity := 'Acute']
@@ -110,40 +117,42 @@ generate.event.opdate.dt <- function(adhb.event.dt,
     all.x = TRUE
   )
   
-  
-  # Attach primary operation from MOH, plus description.
-  # Exclude ineligible procedures, then get the first per EVENT_ID/OPDATE combo
-  if ((length(ineligible.chapters)>0) | (length(ineligible.procedure.strings)>0)) {
-    ineligible.procedure.strings.regex = paste(ineligible.procedure.strings, collapse = '|')
-    
-    eligible.eventid.opdate.dt = moh.op.dt[!((desc.chapter %in% ineligible.chapters) |
-                                               (
-                                                 grepl(
-                                                   ineligible.procedure.strings.regex,
-                                                   desc.procedure,
-                                                   ignore.case = TRUE
-                                                 )
-                                               ))]
-  } else {
-    eligible.eventid.opdate.dt = moh.op.dt
-  }
-  
-  first.eligible.eventid.opdate.dt = eligible.eventid.opdate.dt[, .SD[DIAG_SEQ == min(DIAG_SEQ)], by = .(EVENT_ID, OP_ACDTE)]
-  
+  # Attach the max block clinical severity per event opdate.
   event.opdate.dt = merge(
     x = event.opdate.dt,
-    y = first.eligible.eventid.opdate.dt[, .(
+    y = max.clin.sev.dt[, .(
       EVENT_ID = as.character(EVENT_ID),
       OP_ACDTE,
       code.chapter,
       desc.chapter,
-      code.procedure = CLIN_CD,
-      desc.procedure
+      code.procedure,
+      desc.procedure,
+      max.block.clinical.severity
     )],
     # by.x = c("EVENT_ID", "Actual Into Theatre Date"),
     by = c("EVENT_ID", "OP_ACDTE"),
     all.x = TRUE
   )
+  event.opdate.dt[, max.block.clinical.severity.grouped := max.block.clinical.severity]
+  event.opdate.dt[max.block.clinical.severity %in% c(1,2), max.block.clinical.severity.grouped := '1-2']
+  # event.opdate.dt[max.block.clinical.severity == 3, max.block.clinical.severity.grouped := '3']
+  event.opdate.dt[max.block.clinical.severity %in% c(4,5), max.block.clinical.severity.grouped := '4-5']
+  # event.opdate.dt[max.block.clinical.severity == 999, max.block.clinical.severity.grouped := '999']
+  event.opdate.dt[, max.block.clinical.severity.grouped := factor(max.block.clinical.severity.grouped,
+                                                                  levels = c('0', '1-2', '3', '4-5', '999'))]
+  
+  event.opdate.dt = merge(
+    x = event.opdate.dt,
+    y = min.clin.sev.dt[, .(
+      EVENT_ID = as.character(EVENT_ID),
+      OP_ACDTE,
+      min.block.clinical.severity
+    )],
+    # by.x = c("EVENT_ID", "Actual Into Theatre Date"),
+    by = c("EVENT_ID", "OP_ACDTE"),
+    all.x = TRUE
+  )
+  
   
   
   return(event.opdate.dt)

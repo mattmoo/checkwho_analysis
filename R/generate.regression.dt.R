@@ -87,6 +87,7 @@ generate.regression.dt <- function(daoh.dt,
                             OP_ACDTE,
                             ethnicg.desc.L1,
                             asa.status = factor(asa.status, ordered = FALSE),
+                            clinical.severity = max.block.clinical.severity,
                             asa.acuity,
                             gender = factor(GENDER, levels = c('M','F'), labels = c('Male', 'Female')),
                             icd.chapter = desc.chapter,
@@ -113,6 +114,9 @@ generate.regression.dt <- function(daoh.dt,
   # Group ASA 4 and 5
   regression.dt[asa.status %in% c('ASA 4', 'ASA 5'), asa.status := 'ASA 4-5']
   regression.dt[, asa.status := factor(asa.status, ordered = FALSE)]
+  
+  # Remove order from clinical severity
+  regression.dt[, clinical.severity := factor(clinical.severity, ordered = FALSE)]
   
   # Group ethnicity
   regression.dt[, ethnicity := ethnicg.desc.L1]

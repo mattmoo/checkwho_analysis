@@ -23,6 +23,9 @@ draw.regression.plot <- function(models,
   plot.func = function(mod,
                        plot.coefs) {
     
+    
+
+    
     if ("glm" %in% class(mod) &&
         mod$family$link == 'logit') {
       exp = TRUE
@@ -59,11 +62,26 @@ draw.regression.plot <- function(models,
     for (group in groups) {
       plot.coefs = coefs[coefs %in% group]
       if (length(coefs) > 0) {
-        plotlist[[length(plotlist) + 1]] =
-          plot.func(models, plot.coefs)
         
+        # Convert to list if required.
+        if (!'list' %in% class(models)) {
+          models = list(models)
+        }
+        # Rename only present coefficients to avoid error.
+        old.plot.coefs = plot.coefs
+        plot.coefs = plot.coefs[plot.coefs %in% unique(unlist(lapply(X = models, FUN = function(x) names(x$coefficients))))]
         
-        n.groups = n.groups + 1
+        if (length(plot.coefs) == 0) {
+          warning(paste0('No present coefficients found in: '),
+                  paste(old.plot.coefs, collapse = ', '))
+        } else {
+          plotlist[[length(plotlist) + 1]] =
+            plot.func(models, plot.coefs)
+          
+          
+          n.groups = n.groups + 1
+        }
+        
       }
     }
     

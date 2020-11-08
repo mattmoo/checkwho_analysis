@@ -20,6 +20,7 @@ required.cran.packages = list(
   "ggplot2",
   "ggpubr",
   "gghighlight",
+  "scico",
   
   "Hmisc",
   "stringr",
@@ -66,7 +67,7 @@ lapply(required.cran.packages, require, character.only=T)
 # devtools::document('../../../packages/daohtools')
 # devtools::build('../../../packages/daohtools')
 # devtools::install('../../../packages/daohtools', dependencies = T, reload = T)
-# devtools::install('../../../MOH_general/icd10amachi', dependencies = T, reload = T)
+# devtools::install('"P:/FMHSfiles/SCIENCE/MOH_general/icd10amachi"', dependencies = T, reload = T)
 # devtools::install_github('mattmoo/daohtools')
 # devtools::install_github('milesmcbain/dflow')
 

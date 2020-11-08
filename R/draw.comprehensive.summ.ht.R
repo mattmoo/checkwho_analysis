@@ -30,7 +30,7 @@ draw.comprehensive.summ.ht = function(pre.post.figure.dt,
   )
   
   data.dt.list = list(
-    'Time-series' = time.series.figure.dt,
+    'Extended' = time.series.figure.dt,
     'Pre-SSC' = pre.post.figure.dt[SSC == 'Pre'],
     'Post-SSC' = pre.post.figure.dt[SSC == 'Post']
   )
@@ -51,6 +51,8 @@ draw.comprehensive.summ.ht = function(pre.post.figure.dt,
   
   for (measure.ind in 1:length(measure.list)) {
     measure = measure.list[[measure.ind]]
+    
+    message(measure)
     
     measure.summ.dt = data.table(measure = c(names(measure.list)[measure.ind], names(summ.func.list)))
     

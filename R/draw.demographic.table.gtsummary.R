@@ -8,7 +8,6 @@
 draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
                                              time.series.figure.dt) {
   
-  
   pre.post.figure.dt[SSC == 'Pre', demo.group := 'Pre-SSC']
   pre.post.figure.dt[SSC == 'Post', demo.group := 'Post-SSC']
   time.series.figure.dt[, demo.group := 'Time-series']
@@ -29,11 +28,11 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
                      ethnicity ~ 'Ethnic group',
                      acuity ~ 'ASA Acuity',
                      asa.status ~ 'ASA Physical Status',
-                     icd.chapter.grouped ~ 'ICD-10 Chapter')
+                     clinical.severity ~ 'Clinical severity')
   
   pre.post.input.dt = droplevels(demo.dt[demo.group %in% c('Pre-SSC', 'Post-SSC'),
-                                         .(gender, age.group, ethnicity, acuity, asa.status, icd.chapter.grouped, demo.group)])
-  time.series.input.dt = droplevels(time.series.figure.dt[,.(gender, age.group, ethnicity, acuity, asa.status, icd.chapter.grouped, demo.group)])
+                                         .(gender, age.group, ethnicity, acuity, asa.status, clinical.severity, demo.group)])
+  time.series.input.dt = droplevels(time.series.figure.dt[,.(gender, age.group, ethnicity, acuity, asa.status, clinical.severity, demo.group)])
   time.series.input.dt[,demo.group := NULL]
   
   a = 
@@ -54,7 +53,7 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
   demographic.table.gtsummary$table_header$footnote = stringr::str_replace(
     demographic.table.gtsummary$table_header$footnote,
     pattern = 'Statistical tests performed: ',
-    replacement = 'Pre-SSC and Post-SSC compared using '
+    replacement = 'Pre-SSC Period and Post-SSC Period compared using '
   )
   
   return(demographic.table.gtsummary)

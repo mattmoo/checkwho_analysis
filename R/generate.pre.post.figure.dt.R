@@ -22,6 +22,7 @@ generate.pre.post.figure.dt <- function(risk.adjusted.regression.dt) {
                                                      gender,
                                                      asa.acuity,
                                                      acuity,
+                                                     clinical.severity,
                                                      CCI,
                                                      asa.status,
                                                      icd.chapter.grouped,

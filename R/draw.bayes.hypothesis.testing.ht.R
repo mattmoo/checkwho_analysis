@@ -45,12 +45,24 @@ draw.bayes.hypothesis.testing.ht <- function(hypothesis.testing.list,
         month.year(zero.hyp.test$upper),
         ']'
       ),
-      `During SSC implementation` = as.data.table(hyp.test)[stringr::str_detect(string = hyp.test$hypothesis,
-                                                                                pattern = '.+<.+>',
-                                                                                negate = TRUE),
-                                                            BF],
-      `Outside SSC implementation` = as.data.table(hyp.test)[stringr::str_detect(string = hyp.test$hypothesis, pattern = '.+<.+>'),
-                                                             BF]
+      `During Implementation` = 
+        as.data.table(hyp.test)[stringr::str_detect(string = hyp.test$hypothesis,
+                                                    pattern = '.+>= 13818.+<'),
+                                BF],
+      `During Post-SSC` = 
+        as.data.table(hyp.test)[stringr::str_detect(string = hyp.test$hypothesis,
+                                                    pattern = '.+>= 14365.+<'),
+                                BF],
+      `Outside Implementation and Post-SSC` =
+        as.data.table(hyp.test)[stringr::str_detect(string = hyp.test$hypothesis,
+                                                    pattern = '.+<.+>'),
+                                BF]
+      # `During SSC implementation` = as.data.table(hyp.test)[stringr::str_detect(string = hyp.test$hypothesis,
+      #                                                                           pattern = '.+<.+>',
+      #                                                                           negate = TRUE),
+      #                                                       BF],
+      # `Outside SSC implementation` = as.data.table(hyp.test)[stringr::str_detect(string = hyp.test$hypothesis, pattern = '.+<.+>'),
+      #                                                        BF]
     )
     
   }
@@ -60,7 +72,7 @@ draw.bayes.hypothesis.testing.ht <- function(hypothesis.testing.list,
   # hyp.testing.dt[, Ratio := `Changepoint model weight` / `Null model weight`]
   
   hyp.testing.ht = huxtable::huxtable(hyp.testing.dt) %>%
-    huxtable::set_number_format(everywhere, 4:5, 3) %>%
+    huxtable::set_number_format(everywhere, 4:6, 3) %>%
     huxtable::set_top_border(1, everywhere, 1) %>%
     huxtable::set_bottom_border(1, everywhere, 1) %>%
     huxtable::set_bottom_border(nrow(hyp.testing.dt)+1, everywhere, 1) %>%
@@ -70,9 +82,10 @@ draw.bayes.hypothesis.testing.ht <- function(hypothesis.testing.list,
                                   a2 = NA,
                                   a3 = NA,
                                   b = 'Changepoint detected (Bayes factor)',
-                                  c = NA),
+                                  c = NA,
+                                  d = NA),
                          hyp.testing.ht) %>%
-    huxtable::merge_cells(2, 4:5) %>%
+    huxtable::merge_cells(2, 4:6) %>%
     # huxtable::merge_cells(2:3, 2) %>%
     huxtable:: set_align(2, everywhere, 'centre') %>%
     huxtable::set_top_border(2, everywhere, 1) %>%

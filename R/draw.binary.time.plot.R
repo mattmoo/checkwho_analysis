@@ -108,10 +108,10 @@ draw.binary.time.plot <- function(binary.time.summary.dt,
                                      hjust=1)) +
     
     # Line legend scales
-    scale_linetype_discrete(name = legend.title,
+    scale_linetype_discrete(name = str_wrap(legend.title,20),
                             breaks = legend.levels,
                             labels = legend.labels) +
-    scale_shape_discrete(name = legend.title,
+    scale_shape_discrete(name = str_wrap(legend.title,20),
                          breaks = legend.levels,
                          labels = legend.labels) +
     

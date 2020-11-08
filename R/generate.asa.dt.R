@@ -18,6 +18,7 @@ generate.asa.dt <- function(moh.op.dt) {
     '4' = 'ASA 4',
     '5' = 'ASA 5',
     '6' = 'ASA 6'
+    # '9' = 'Unrecorded'
   )
   
   # Pull out only anaesthetic procedures with ASA.
