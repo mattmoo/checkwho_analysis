@@ -14,11 +14,12 @@ drake_config(checkwho_plan,
 
 # p = vis_drake_graph(checkwho_plan)
 
-# make(checkwho_plan, targets = 'publication.table.demographics', force = TRUE)
+# make(checkwho_plan, targets = 'mort.regression.abbreviated.plot', force = TRUE)
 make(checkwho_plan, targets = c('publication.results.demographics',
                                 'publication.results.maori',
                                 'publication.results.daoh',
                                 'publication.results.mortality',
+                                'publication.table.demographics',
                                 'publication.table.demographics',
                                 'publication.figure.daoh.with.mort',
                                 'publication.table.comprehensive.daoh.summary',
@@ -41,24 +42,7 @@ make(checkwho_plan, targets = c('publication.results.demographics',
                                 'page.width.inches',
                                 'figure.dpi',
                                 'image.output.format'), force = TRUE)
-# make(checkwho_plan, targets = c('publication.results.mortality',
-#                                 'publication.figure.mort.reg',
-#                                 'publication.figure.mort.reg.abridged',
-#                                 'publication.table.mort.reg'), force = TRUE)
-# make(checkwho_plan, targets = 'asa.dt', force = TRUE)
-# make(checkwho_plan, targets = 'pre.post.figure.dt', force = TRUE)
-# make(checkwho_plan, targets = 'mort.90.regression.plot', force = TRUE)
-# make(checkwho_plan, targets = 'regression.dt', force = TRUE)
-# make(checkwho_plan, targets = 'adhb.revision.one.recalculated.theatre.event.dt', force = TRUE)
-# make(checkwho_plan, targets = 'eligibility.figure.numbers.dt')
-#      force = TRUE)
-# make(checkwho_plan)
 
-# plot(readd(mortality.time.plot))
-# readd(daoh.time.plot)
-# readd(daoh.time.plot)z
-# plot(readd(daoh.exceedance.time.plot))
-# 
 loadd(publication.results.demographics,
       publication.results.maori,
       publication.results.daoh,

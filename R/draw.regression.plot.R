@@ -26,8 +26,8 @@ draw.regression.plot <- function(models,
     
 
     
-    if ("glm" %in% class(mod) &&
-        mod$family$link == 'logit') {
+    if ("glm" %in% unlist(lapply(mod, class)) &&
+        mod[[1]]$family$link == 'logit') {
       exp = TRUE
       if (is.null(xlab)) {
         xlab = 'Odds ratio'

@@ -31,7 +31,7 @@ checkwho_plan =
     
     template.docx.filein = 'P:/FMHSfiles/WRITING/blankTemplate.docx',
     report.output.dir = 'P:/FMHSfiles/SCIENCE/CheckWHO/reports',
-    report.docx.filein = file_in('P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.3.2.docx'),
+    report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.3.2.docx',
     
     # The first revision had a wee issue where all of the events were the first
     # per patient per period. If this is FALSE, replicate that. If TRUE, get a
