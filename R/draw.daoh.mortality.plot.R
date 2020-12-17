@@ -72,7 +72,7 @@ draw.daoh.mortality.plot <- function(input.dt) {
     #                bins=90) +
     # gghighlight(mort.90.day == TRUE) +
     # labs(title=paste("Frequency for Overall DAOH (both groups, n=", nGroup1+nGroup2, ")", sep="")) +
-    labs(x=~"DAOH"[90], y = element_blank()) +
+    labs(x="Days alive and out of hospital (90 days)", y = element_blank()) +
     # labs(x="Days alive and out of hospital", y="Percentage") +
     transformedYScale +
     xScale +

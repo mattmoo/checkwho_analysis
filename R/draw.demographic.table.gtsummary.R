@@ -16,33 +16,43 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
                                                           'Post-SSC',
                                                           'Time-series'))]
   
-  demo.dt = rbindlist(
-    list(
-      pre.post.figure.dt,
-      time.series.figure.dt
-    )
+  demo.dt = rbindlist(list(pre.post.figure.dt,
+                           time.series.figure.dt))
+  
+  rename.list = list(
+    gender ~ 'Gender',
+    age.group ~ 'Age',
+    ethnicity ~ 'Ethnic group',
+    acuity ~ 'ASA Acuity',
+    asa.status ~ 'ASA Physical Status',
+    icd.chapter.grouped ~ 'Procedure type'
   )
   
-  rename.list = list(gender ~ 'Gender',
-                     age.group ~ 'Age',
-                     ethnicity ~ 'Ethnic group',
-                     acuity ~ 'ASA Acuity',
-                     asa.status ~ 'ASA Physical Status',
-                     clinical.severity ~ 'Clinical severity')
-  
   pre.post.input.dt = droplevels(demo.dt[demo.group %in% c('Pre-SSC', 'Post-SSC'),
-                                         .(gender, age.group, ethnicity, acuity, asa.status, clinical.severity, demo.group)])
-  time.series.input.dt = droplevels(time.series.figure.dt[,.(gender, age.group, ethnicity, acuity, asa.status, clinical.severity, demo.group)])
-  time.series.input.dt[,demo.group := NULL]
+                                         .(gender,
+                                           age.group,
+                                           ethnicity,
+                                           acuity,
+                                           asa.status,
+                                           icd.chapter.grouped,
+                                           demo.group)])
+  time.series.input.dt = droplevels(time.series.figure.dt[, .(gender,
+                                                              age.group,
+                                                              ethnicity,
+                                                              acuity,
+                                                              asa.status,
+                                                              icd.chapter.grouped,
+                                                              demo.group)])
+  time.series.input.dt[, demo.group := NULL]
   
-  a = 
-    tbl_summary(pre.post.input.dt, 
-                by = 'demo.group', 
+  a =
+    tbl_summary(pre.post.input.dt,
+                by = 'demo.group',
                 label = rename.list) %>%
     add_p(test = list(age.group ~ 'chisq.test'))
   
-  b = 
-    tbl_summary(time.series.input.dt, 
+  b =
+    tbl_summary(time.series.input.dt,
                 label = rename.list)
   
   demographic.table.gtsummary = tbl_merge(list(b, a),

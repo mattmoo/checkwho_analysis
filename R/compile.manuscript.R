@@ -401,7 +401,8 @@ compile.manuscript <- function(asset.list,
            res = res,
            width = pageWidthWordInches, 
            height = pageWidthWordInches/aspectRatio,
-           units = "in")
+           units = "in",
+           compression = "zip+p")
       print(plot)
       dev.off()
     }

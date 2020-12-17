@@ -64,9 +64,10 @@ lapply(required.cran.packages, require, character.only=T)
 # For permutation test with custom function
 # install_version("bda", version = "3.2.0-3", repos ="http://cran.us.r-project.org")
 
-# devtools::document('../../../packages/daohtools')
-# devtools::build('../../../packages/daohtools')
-# devtools::install('../../../packages/daohtools', dependencies = T, reload = T)
+# daoh.tools.path = 'P:/FMHSfiles/SCIENCE/packages/R/daohtools'
+# devtools::document(daoh.tools.path)
+# devtools::build(daoh.tools.path)
+# devtools::install(daoh.tools.path, dependencies = T, reload = T)
 # devtools::install('"P:/FMHSfiles/SCIENCE/MOH_general/icd10amachi"', dependencies = T, reload = T)
 # devtools::install_github('mattmoo/daohtools')
 # devtools::install_github('milesmcbain/dflow')

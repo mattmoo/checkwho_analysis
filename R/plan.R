@@ -31,7 +31,7 @@ checkwho_plan =
     
     template.docx.filein = 'P:/FMHSfiles/WRITING/blankTemplate.docx',
     report.output.dir = 'P:/FMHSfiles/SCIENCE/CheckWHO/reports',
-    report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.3.2.docx',
+    report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.4.1.docx',
     
     # The first revision had a wee issue where all of the events were the first
     # per patient per period. If this is FALSE, replicate that. If TRUE, get a
@@ -69,7 +69,6 @@ checkwho_plan =
       'icd.chapter.grouped'
     ),
     
-    
     daoh.covariates = mortality.covariates,
     
     risk.adjust.on.covariates = mortality.covariates,
@@ -98,10 +97,10 @@ checkwho_plan =
     # ),
 
     changepoint.measure.list = c(
-      "Exceeds RA DAOH 10%" = "exceeds.daoh.risk.adj.10",
-      "Exceeds RA DAOH 25%" = "exceeds.daoh.risk.adj.25",
+      "Exceeds RA DAOH 0.1" = "exceeds.daoh.risk.adj.10",
+      "Exceeds RA DAOH 0.25" = "exceeds.daoh.risk.adj.25",
       "Exceeds RA DAOH Median" = "exceeds.daoh.risk.adj.median",
-      "Exceeds RA DAOH 75%" = "exceeds.daoh.risk.adj.75",
+      "Exceeds RA DAOH 0.75" = "exceeds.daoh.risk.adj.75",
       "30-day mortality" = "mort.30.day",
       "90-day mortality" = "mort.90.day"
     ),
@@ -527,12 +526,12 @@ checkwho_plan =
       y.breaks = seq(0, 1, 0.05),
       x.lims = NULL,
       x.title = "Year",
-      y.title = "Percentage risk-adjusted DAOH equalling or exceeding overall percentile",
+      y.title = "Percentage risk-adjusted DAOH equalling or exceeding overall quantile",
       legend.title = "Exceeds overall risk-adjusted DAOH",
-      legend.labels.rename = c(exceeds.daoh.risk.adj.10 = '10%',
-                               exceeds.daoh.risk.adj.25 = '25%',
-                               exceeds.daoh.risk.adj.median = '50%',
-                               exceeds.daoh.risk.adj.75 = '75%'),
+      legend.labels.rename = c(exceeds.daoh.risk.adj.10 = '0.1',
+                               exceeds.daoh.risk.adj.25 = '0.25',
+                               exceeds.daoh.risk.adj.median = '0.5',
+                               exceeds.daoh.risk.adj.75 = '0.75'),
       draw.ci = TRUE,
       draw.smooth.line = FALSE,
       period.rect.plot = period.rect.plot),
@@ -556,12 +555,12 @@ checkwho_plan =
       y.breaks = seq(0, 1, 0.05),
       x.lims = NULL,
       x.title = "Year",
-      y.title = "Percentage risk-adjusted DAOH equalling or exceeding overall percentile",
+      y.title = "Percentage risk-adjusted DAOH equalling or exceeding overall quantile",
       legend.title = "Exceeds overall risk-adjusted DAOH",
-      legend.labels.rename = c(exceeds.daoh.risk.adj.10 = '10%',
-                               exceeds.daoh.risk.adj.25 = '25%',
-                               exceeds.daoh.risk.adj.median = '50%',
-                               exceeds.daoh.risk.adj.75 = '75%'),
+      legend.labels.rename = c(exceeds.daoh.risk.adj.10 = '0.1',
+                               exceeds.daoh.risk.adj.25 = '0.25',
+                               exceeds.daoh.risk.adj.median = '0.5',
+                               exceeds.daoh.risk.adj.75 = '0.75'),
       draw.ci = TRUE,
       draw.smooth.line = FALSE,
       period.rect.plot = period.rect.plot),
@@ -651,6 +650,7 @@ checkwho_plan =
       'Neuro (vs Ortho)' = 'icd.chapter.groupedProcedures on Nervous System',
       'Vascular (vs Ortho)' = 'icd.chapter.groupedProcedures on Cardiovascular System',
       'Urology (vs Ortho)' = 'icd.chapter.groupedProcedures on Male Genital Organs',
+      'Dermo (vs Ortho)' = 'icd.chapter.groupedDermatological and Plastic Procedures',
       'Other (vs Ortho)' = 'icd.chapter.groupedOther'
     ),
     
@@ -666,7 +666,14 @@ checkwho_plan =
       'SSC * 34-48yo' = 'SSCPost:age.group34-48',
       'SSC * 49-64yo' = 'SSCPost:age.group49-64',
       'SSC * 65-78yo' = 'SSCPost:age.group65-78',
-      'SSC * 79+yo' = 'SSCPost:age.group79+'
+      'SSC * 79+yo' = 'SSCPost:age.group79+',
+      'SSC * Gastro' = 'SSCPost:icd.chapter.groupedProcedures on Digestive System',
+      'SSC * Urinary' = 'SSCPost:icd.chapter.groupedProcedures on Urinary System',
+      'SSC * Neuro' = 'SSCPost:icd.chapter.groupedProcedures on Nervous System',
+      'SSC * Vascular' = 'SSCPost:icd.chapter.groupedProcedures on Cardiovascular System',
+      'SSC * Dermo' = 'SSCPost:icd.chapter.groupedDermatological and Plastic Procedures',
+      'SSC * Urology' = 'SSCPost:icd.chapter.groupedProcedures on Male Genital Organs',
+      'SSC * Other' = 'SSCPost:icd.chapter.groupedOther'
     ), 
     
     group.coefficients.list = list(
@@ -709,7 +716,14 @@ checkwho_plan =
                   'SSCPost:age.group34-48',
                   'SSCPost:age.group49-64',
                   'SSCPost:age.group65-78',
-                  'SSCPost:age.group79+')
+                  'SSCPost:age.group79+',
+                  'SSCPost:icd.chapter.groupedProcedures on Digestive System',
+                  'SSCPost:icd.chapter.groupedProcedures on Urinary System',
+                  'SSCPost:icd.chapter.groupedProcedures on Nervous System',
+                  'SSCPost:icd.chapter.groupedProcedures on Cardiovascular System',
+                  'SSCPost:icd.chapter.groupedDermatological and Plastic Procedures',
+                  'SSCPost:icd.chapter.groupedProcedures on Male Genital Organs',
+                  'SSCPost:icd.chapter.groupedOther')
     ),
     
     # Mortality regression
@@ -860,30 +874,30 @@ checkwho_plan =
     
     daoh.maori.regression.table = draw.regression.table(
       models = daoh.maori.regression.models,
-      model.names = scales::percent(daoh.quantreg.quantiles)
+      model.names = daoh.quantreg.quantiles
     ),
       
     daoh.regression.table = draw.regression.table(
       models = daoh.regression.models,
-      model.names = scales::percent(daoh.quantreg.quantiles),
+      model.names = daoh.quantreg.quantiles,
       coefs = c(rename.coefficients.list, rename.interaction.coefficients.list)
     ),
     
     daoh.regression.abbreviated.plot = draw.regression.plot(
       models = daoh.regression.models,
       coefs = c('SSC (vs Pre-SSC)' = 'SSCPost'),
-      model.names = scales::percent(daoh.quantreg.quantiles),
-      xlab= 'DAOH',
-      legend.title = 'DAOH percentile',
+      model.names = daoh.quantreg.quantiles,
+      xlab= 'Days alive and out of hospital (90 days)',
+      legend.title = 'DAOH quantile',
       ylabs = FALSE
     ),
     daoh.regression.plot = draw.regression.plot(
       models = daoh.regression.models,
       coefs = c(rename.coefficients.list, rename.interaction.coefficients.list),
-      model.names = scales::percent(daoh.quantreg.quantiles),
+      model.names = daoh.quantreg.quantiles,
       groups = c(group.coefficients.list,group.interaction.coefficients.list),
-      xlab= 'DAOH',
-      legend.title = 'DAOH percentile'
+      xlab= 'Days alive and out of hospital (90 days)',
+      legend.title = 'DAOH quantile'
     ),
     # A DAOH plot with mortal cases highlighted
     daoh.mortality.plot = draw.daoh.mortality.plot(
@@ -1069,7 +1083,7 @@ checkwho_plan =
       name = 'groupSummary',
       input.table = demographic.table.gtsummary,
       caption = paste0(
-        'Demographic summaries for Pre-SSC, Post-SSC, and Extended periods. '
+        'Summary of demographic information, ASA and, procedure types for Pre-SSC, Post-SSC, and Extended periods.'
       )
     ),
     
@@ -1078,8 +1092,8 @@ checkwho_plan =
       input.plot = daoh.mortality.plot,
       caption = paste0(
         "Distribution of DAOH\u2089\u2080 for Extended Period (light grey). ",
-        "Overlaid in dark grey is the distribution for procedures where the patient diedduring the 90 days following their index procedure having spent at least some days alive and out of hospital. "
-        ,"Note the square root transform on y-axis."
+        "Overlaid in dark grey is the distribution for operations where the patient died during the subsequent 90 days, with or without having spent at least some days alive and out of hospital. ",
+        "Note the square root transform on y-axis."
       ),
       aspect.ratio = 1.5
     ),
@@ -1087,38 +1101,46 @@ checkwho_plan =
     publication.table.comprehensive.daoh.summary = generate.publication.table(
       name = 'daohTab',
       input.table = comprehensive.daoh.summary.ht,
-      caption = paste0("DAOH\u2089\u2080 for the Exptended Period (Extended), the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
-                       "Differences in the overall DAOH₉₀ distribution were assessed using Wilcoxon-Mann-Whitney U tests. Differences in other values were assessed using absolute difference. ",
-                       "P-values were generated using permutation tests with ",
-                       format(n.iterations.for.perm.tests, big.mark = ','),  
-                       " permutations. SSC = Surgical Safety Checklist.")
+      caption = paste0(
+        "DAOH\u2089\u2080 for the Extended Period (Extended), the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
+        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. Differences in other values were assessed using absolute difference and ",
+        "p-values generated using permutation tests with ",
+        format(n.iterations.for.perm.tests, big.mark = ','),
+        " permutations (SSC: Surgical Safety Checklist)."
+      )
     ),
     
     publication.figure.daoh.risk.adj = generate.publication.figure(
       name = 'daohGroupPlotRiskAdj',
       input.plot = daoh.risk.adj.pre.post.plot,
-      caption = paste0("Distribution of risk-adjusted DAOH\u2089\u2080 for both Pre-SSC and Post-SSC periods. ",
-                       "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
-                       "Note the square root transform of y-axis, to facilitate comparisons at intermediate DAOH\u2089\u2080 values."),
+      caption = paste0(
+        "Distribution of risk-adjusted DAOH\u2089\u2080 for Pre-SSC and Post-SSC periods. ",
+        "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
+        "Note the square root transform of y-axis."
+      ),
       aspect.ratio = 1.5
     ),
     
     publication.figure.daoh.raw = generate.publication.figure(
       name = 'daohGroupPlotRaw',
       input.plot = daoh.pre.post.plot,
-      caption = paste0("Distribution of unadjusted DAOH\u2089\u2080 for both Pre-SSC and Post-SSC periods. ",
-                       "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
-                       "Note the square root transform of y-axis, to facilitate comparisons at intermediate DAOH\u2089\u2080 values."),
+      caption = paste0(
+        "Distribution of unadjusted DAOH\u2089\u2080 for Pre-SSC and Post-SSC periods. ",
+        "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
+        "Note the square root transform of y-axis."
+      ),
       aspect.ratio = 1.5
     ),
     
     publication.figure.mort.reg = generate.publication.figure(
       name = 'mortReg',
       input.plot = mort.regression.plot,
-      caption = paste0("Odds ratios of effects in a logit regression model for 30-day and 90-day mortality. ",
-                       "Thin and thick bars respectively indicate 95% and 90% confidence intervals. ",
-                       "Predictors have been divided into separate odds ratio axes, as the effects are on different scales."),
-      aspect.ratio = 0.5
+      caption = paste0(
+        "Odds ratios of effects in a logit regression model for 30-day and 90-day mortality. ",
+        "Thin and thick bars respectively indicate 95% and 90% confidence intervals. ",
+        "Predictors have been divided into separate odds ratio axes, as the effects are on different scales."
+      ),
+      aspect.ratio = 0.7071136
     ),
     
     publication.figure.mort.reg.abridged = generate.publication.figure(
@@ -1127,7 +1149,7 @@ checkwho_plan =
       caption = paste0(
         "Odds ratios of 30- and 90-day mortality for Post-SSC vs Pre-SSC periods in a multivariate logistic regression model. ",
         "Thin and thick bars respectively indicate 95% and 90% confidence intervals. ",
-        "Full models are presented in TAB_mortReg_REF and FIG_mortReg_REF."
+        "More comprehensive results are presented in supplementary material in TAB_mortReg_REF and FIG_mortReg_REF."
       ),
       aspect.ratio = 4
     ),
@@ -1135,16 +1157,20 @@ checkwho_plan =
     publication.table.mort.reg = generate.publication.table(
       name = 'mortReg',
       input.table = mort.regression.table,
-      caption = paste0("Logit regression models for 30-day and 90-day mortality (effect size and 95% CI).")
+      caption = paste0(
+        "Results of the logit regression models for 30-day and 90-day mortality (effect size and 95% CI)."
+      )
     ),
     
     publication.figure.daoh.reg = generate.publication.figure(
       name = 'daohReg',
       input.plot = daoh.regression.plot,
-      caption = paste0("Quantile regression model for DAOH\u2089\u2080, fitted at 0.1, 0.25, 0.5, and 0.75 quantiles. ",
-                       "Thin and thick bars respectively indicate 95% and 90% confidence intervals. ",
-                       "Predictors have been divided into separate axes, as the effects are on different scales."),
-      aspect.ratio = 0.5
+      caption = paste0(
+        "Quantile regression model for DAOH\u2089\u2080, fitted at 0.1, 0.25, 0.5, and 0.75 quantiles. ",
+        "Thin and thick bars respectively indicate 95% and 90% confidence intervals. ",
+        "Predictors have been divided into separate axes, as the effects are on different scales."
+      ),
+      aspect.ratio = 0.7071136
     ),
     
     publication.figure.daoh.reg.abridged = generate.publication.figure(
@@ -1153,7 +1179,7 @@ checkwho_plan =
       caption = paste0(
         "Difference in DAOH\u2089\u2080 between the Post-SSC Period and the Pre-SSC Period in a multivariate quantile regression model, fitted at 0.1, 0.25, 0.5, and 0.75 quantiles. ",
         "Thin and thick bars respectively indicate 95% and 90% confidence intervals. ",
-        "Full models are presented in TAB_daohReg_REF and FIG_daohReg_REF."
+        "More comprehensive results are presented in supplementary material in TAB_daohReg_REF and FIG_daohReg_REF."
       ),
       aspect.ratio = 4
     ),
@@ -1161,7 +1187,9 @@ checkwho_plan =
     publication.table.daoh.reg = generate.publication.table(
       name = 'daohReg',
       input.table = daoh.regression.table,
-      caption = paste0("Quantile regression models for DAOH\u2089\u2080, fitted at 0.1, 0.25, 0.5, and 0.75 quantiles (effect size and 95% CI).")
+      caption = paste0(
+        "Results of the quantile regression models for DAOH\u2089\u2080, fitted at 0.1, 0.25, 0.5, and 0.75 quantiles (effect size and 95% CI)."
+      )
     ),
     
     publication.table.facility.type.summary = generate.publication.table(
@@ -1184,7 +1212,7 @@ checkwho_plan =
       name = 'mortTimePlot',
       input.plot = mortality.time.plot,
       caption = paste0(
-        "Mortality (30-day and 90-day) per quarter. ",
+        "Mortality rates (30-day and 90-day) per quarter. ",
         "The registered Pre-SSC and Post-SSC periods are shaded red and blue respectively, the Implementation Period is shaded green."
       ),
       aspect.ratio = 1.5
@@ -1194,11 +1222,14 @@ checkwho_plan =
     publication.figure.changepoint.model.with.prior.gradient.change.plot = generate.publication.figure(
       name = 'changepointWithPriorGradient',
       input.plot = changepoint.model.with.prior.gradient.change.plot,
-      caption = paste0("Changepoint models on time-series data as generated by mcp, with prior of two changepoints, with positive gradients. ",
-                       "Percentages of patients equalling or exceeding various quantiles (percentiles) of overall risk-adjusted DAOH, and mortality. ",
-                       "Density of changepoint estimates is denoted by curves at the bottom of each plot."),
-      aspect.ratio = 0.5
-    ), 
+      caption = paste0(
+        "Results from the changepoint models fitted to the Extended Period, with regularisation priors of two changepoints, with positive (for DAOH) or negative (for mortality) gradients. ",
+        "Percentages of patients equalling or exceeding various quantiles of overall risk-adjusted DAOH, and mortality. ",
+        "Density of changepoint estimates is denoted by curves at the bottom of each plot. Pre-SSC Period is shaded red, Implementation Period green, and Post-SSC Period blue. ",
+        "(RA: risk-adjusted)."
+      ),
+      aspect.ratio = 0.7071136
+    ),
     
     # publication.table.loo.testing = generate.publication.table(
     #   name = 'loo',
@@ -1212,9 +1243,10 @@ checkwho_plan =
       caption = paste0(
         "Results of Bayesian changepoint analysis, including ",
         "point estimate of first changepoint and 95% credible intervals, and ",
-        "Bayes factors (BFs) comparing the hypotheses that the first changepoint was during the SSC Implementation Period, that it was during the Post-SSC period, and that it was outside both periods. "
+        "Bayes factors comparing the hypotheses that the first changepoint occurred during the SSC Implementation Period, the Post-SSC Period, or outside either of these periods. Bayes factor is positively associated with probability, so (for example) in the first row it is some 75 times more likely that change occurred outside the Implementation and Post-SSC periods. ",
+        "(RA: Risk-adjusted)."
       )
-    ), 
+    ),
     
     publication.results.demographics = list(
       n = adhb.theatre.event.dt[`Actual Into Theatre Date Time` >= min.date & `Actual Into Theatre Date Time` <= max.date,.N],

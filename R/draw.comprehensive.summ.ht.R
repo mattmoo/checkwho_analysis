@@ -17,15 +17,15 @@ draw.comprehensive.summ.ht = function(pre.post.figure.dt,
     'SD' = sd,
     # 'Mean (SD)' = function(x)
     #   paste0(mean(x), digits = 1, ' (', sd(x), digits = 1, ')'),
-    '10%' = function(x)
+    '0.1' = function(x)
       as.numeric(quantile(x, probs = 0.1)),
-    '25%' = function(x)
+    '0.25' = function(x)
       as.numeric(quantile(x, probs = 0.25)),
     'Median' = function(x)
       as.numeric(quantile(x, probs = 0.5)),
-    '75%' = function(x)
+    '0.75' = function(x)
       as.numeric(quantile(x, probs = 0.75)),
-    '90%' = function(x)
+    '0.90' = function(x)
       as.numeric(quantile(x, probs = 0.9))
   )
   

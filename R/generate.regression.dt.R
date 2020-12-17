@@ -101,15 +101,21 @@ generate.regression.dt <- function(daoh.dt,
   
   
   # Group rarer chapters.
-  other.icd.chapters = unique(c(regression.dt[pre.eligible.and.unique==TRUE,.N,by = icd.chapter][N<0.05*sum(N)][,icd.chapter],
-                                regression.dt[post.eligible.and.unique==TRUE,.N,by = icd.chapter][N<0.05*sum(N)][,icd.chapter]))
+  named.icd.chapters = unique(c(regression.dt[pre.eligible.and.unique==TRUE,.N,by = icd.chapter][N>=0.05*sum(N)][,icd.chapter],
+                                regression.dt[post.eligible.and.unique==TRUE,.N,by = icd.chapter][N>=0.05*sum(N)][,icd.chapter]))
+  # other.icd.chapters = regression.dt[, unique(icd.chapter)][!regression.dt[, unique(icd.chapter)] %in% other.icd.chapters]
+  
   regression.dt[,
                 icd.chapter.grouped := icd.chapter]
-  regression.dt[icd.chapter %in% other.icd.chapters,
+  regression.dt[!icd.chapter %in% named.icd.chapters,
                 icd.chapter.grouped := 'Other']
   regression.dt[,
                 icd.chapter.grouped := factor(icd.chapter.grouped,
-                                              levels = regression.dt[,.N,by = icd.chapter.grouped][order(-N)][,icd.chapter.grouped])]
+                                              levels = c(regression.dt[,
+                                                                       .N,
+                                                                       by = icd.chapter.grouped][order(-N)][icd.chapter.grouped != 'Other',
+                                                                                                            icd.chapter.grouped],
+                                                         'Other'))]
   
   # Group ASA 4 and 5
   regression.dt[asa.status %in% c('ASA 4', 'ASA 5'), asa.status := 'ASA 4-5']

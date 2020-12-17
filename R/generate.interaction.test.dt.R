@@ -30,15 +30,25 @@ generate.interaction.test.dt <- function(models) {
         
         tau = model$tau
         
-        new.model = generate.quantile.regression.models(
-          input.dt = input.dt,
-          outcome = outcome,
-          predictors = predictor,
-          covariates = c(covariates, interaction.term),
-          tau = tau
+        
+        new.model = tryCatch(
+          generate.quantile.regression.models(
+            input.dt = input.dt,
+            outcome = outcome,
+            predictors = predictor,
+            covariates = c(covariates, interaction.term),
+            tau = tau
+          ),
+          error = function(e) NULL
+          
         )
         
-        w = anova(model, new.model[[1]], test = "Wald")
+        if (!is.null(new.model)) {
+          w = anova(model, new.model[[1]], test = "Wald")
+        } else {
+          w = NULL
+        }
+        
         
         row.dt = cbind(
           data.table(
