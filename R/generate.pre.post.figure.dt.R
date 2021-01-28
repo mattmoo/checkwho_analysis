@@ -15,6 +15,7 @@ generate.pre.post.figure.dt <- function(risk.adjusted.regression.dt) {
                                                      moh.event.id,
                                                      pre.eligible.and.unique,
                                                      post.eligible.and.unique,
+                                                     SSC,
                                                      daoh.period.start,
                                                      age.group,
                                                      ethnicity,
@@ -32,12 +33,6 @@ generate.pre.post.figure.dt <- function(risk.adjusted.regression.dt) {
                                                      mort.90.day
                                                    )]
   
-  pre.post.figure.dt[, SSC := NA_character_]
-  
-  pre.post.figure.dt[pre.eligible.and.unique == TRUE, SSC := 'Pre']
-  pre.post.figure.dt[post.eligible.and.unique == TRUE, SSC := 'Post']
-  
-  pre.post.figure.dt[, SSC := factor(SSC, levels = c('Pre','Post'))]
 
   pre.post.figure.dt[, pre.eligible.and.unique := NULL]
   pre.post.figure.dt[, post.eligible.and.unique := NULL]

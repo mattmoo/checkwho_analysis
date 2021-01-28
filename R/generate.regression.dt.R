@@ -85,6 +85,7 @@ generate.regression.dt <- function(daoh.dt,
     x = regression.dt,
     y = event.opdate.dt[, .(EVENT_ID,
                             OP_ACDTE,
+                            LOS,
                             ethnicg.desc.L1,
                             asa.status = factor(asa.status, ordered = FALSE),
                             clinical.severity = max.block.clinical.severity,
@@ -149,6 +150,14 @@ generate.regression.dt <- function(daoh.dt,
   
   # Convert DAOH to numeric
   regression.dt[, daoh := as.numeric(daoh)]
+  
+  # Attach groups.
+  regression.dt[, SSC := NA_character_]
+  
+  regression.dt[pre.eligible.and.unique == TRUE, SSC := 'Pre']
+  regression.dt[post.eligible.and.unique == TRUE, SSC := 'Post']
+  
+  regression.dt[, SSC := factor(SSC, levels = c('Pre','Post'))]
   
   return(regression.dt)
 }

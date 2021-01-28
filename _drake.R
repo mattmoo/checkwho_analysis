@@ -13,6 +13,8 @@ drake_config(checkwho_plan,
 
 
 # p = vis_drake_graph(checkwho_plan)
+make(checkwho_plan, 'risk.adjusted.regression.dt')
+asassasa
 
 # make(checkwho_plan, targets = 'mort.regression.abbreviated.plot', force = TRUE)
 make(checkwho_plan, targets = c('publication.results.demographics',
@@ -47,6 +49,7 @@ loadd(publication.results.demographics,
       publication.results.daoh,
       publication.results.mortality
 )
+asassasaq
 
 loadd(publication.table.demographics,
       publication.figure.daoh.with.mort,

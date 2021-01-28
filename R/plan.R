@@ -31,7 +31,7 @@ checkwho_plan =
     
     template.docx.filein = 'P:/FMHSfiles/WRITING/blankTemplate.docx',
     report.output.dir = 'P:/FMHSfiles/SCIENCE/CheckWHO/reports',
-    report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.4.1.docx',
+    report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.4.2.docx',
     
     # The first revision had a wee issue where all of the events were the first
     # per patient per period. If this is FALSE, replicate that. If TRUE, get a
@@ -57,16 +57,17 @@ checkwho_plan =
     image.output.format = 'png',
       
     mortality.covariates = c(
+      'age',
       'gender',
-      'age.group',
+      # 'age.group',
       # 'maori.ethnicity',
       'asa.status',
       'asa.acuity',
       # 'CCI',
       'ethnicity',
       # 'acuity',
-      # 'clinical.severity',
-      'icd.chapter.grouped'
+      'clinical.severity'
+      # 'icd.chapter.grouped'
     ),
     
     daoh.covariates = mortality.covariates,
@@ -447,12 +448,29 @@ checkwho_plan =
       family = 'binomial'
     ),
     
+    dra.risk.adjust.model.list = list(
+      MORT = calculate.dra.risk.adjustment.glm(
+        input.dt = input.dt,
+        outcome.col.name = mortality.col.name,
+        covariate.col.names = risk.adjust.on.covariates,
+        family = binomial(link = 'logit')
+      ),
+      LOS = calculate.dra.risk.adjustment.glm(
+        input.dt = input.dt,
+        outcome.col.name = mortality.col.name,
+        covariate.col.names = risk.adjust.on.covariates,
+        outlier.limits = c(-Inf, 200),
+        family = poisson
+      )
+    ),
+    
     # Generate a data.table with risk adjusted values
     risk.adjusted.regression.dt = risk.adjust.regression.dt(
       regression.dt,
       daoh.risk.adjust.model,
       mort.90.risk.adjust.model,
-      mort.30.risk.adjust.model
+      mort.30.risk.adjust.model,
+      dra.risk.adjust.model.list
     ), 
     
     
@@ -1313,6 +1331,18 @@ checkwho_plan =
       mort.30.day.pre = pre.post.figure.dt[SSC == 'Pre',.SD[,.N,by = mort.30.day][mort.30.day==TRUE,N]/.N][1],
       mort.30.day.post = pre.post.figure.dt[SSC == 'Post',.SD[,.N,by = mort.30.day][mort.30.day==TRUE,N]/.N][1],
 
+      mort.90.day.pre.n = pre.post.figure.dt[SSC == 'Pre' & mort.90.day==TRUE,.N],
+      mort.90.day.post.n = pre.post.figure.dt[SSC == 'Post' & mort.90.day==TRUE,.N],
+      
+      mort.30.day.pre.n = pre.post.figure.dt[SSC == 'Pre' & mort.30.day==TRUE,.N],
+      mort.30.day.post.n = pre.post.figure.dt[SSC == 'Post' & mort.30.day==TRUE,.N],
+      
+      mort.90.day.overall = time.series.figure.dt[,.SD[,.N,by = mort.90.day][mort.90.day==TRUE,N]/.N],
+      mort.30.day.overall = time.series.figure.dt[,.SD[,.N,by = mort.30.day][mort.30.day==TRUE,N]/.N],
+      
+      mort.90.day.overall.n = time.series.figure.dt[mort.90.day==TRUE,.N],
+      mort.30.day.overall.n = time.series.figure.dt[mort.30.day==TRUE,.N],
+      
       final.mortality.covariates = final.mortality.covariates,
       interactions.dt = mort.interaction.test.dt[pvalue.fdr < 0.05, interaction.term],
       

@@ -44,7 +44,9 @@ required.cran.packages = list(
   # Custom package for ICD-10
   "icd10amachi",
   # For the report
-  "officer"
+  "officer",
+  
+  'survey'
 )
 
 conflict_prefer("%like%", "data.table")
@@ -65,6 +67,7 @@ lapply(required.cran.packages, require, character.only=T)
 # install_version("bda", version = "3.2.0-3", repos ="http://cran.us.r-project.org")
 
 # daoh.tools.path = 'P:/FMHSfiles/SCIENCE/packages/R/daohtools'
+# daoh.tools.path = '../daohtools'
 # devtools::document(daoh.tools.path)
 # devtools::build(daoh.tools.path)
 # devtools::install(daoh.tools.path, dependencies = T, reload = T)
