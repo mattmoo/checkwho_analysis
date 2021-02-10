@@ -20,11 +20,14 @@ required.cran.packages = list(
   "ggplot2",
   "ggpubr",
   "gghighlight",
+  "gganimate",
   "scico",
+  "forcats",
   
   "Hmisc",
   "stringr",
   # "snakecase",
+  "coin",
   "dummies",
   "DescTools",
   "plyr",
@@ -50,6 +53,7 @@ required.cran.packages = list(
 )
 
 conflict_prefer("%like%", "data.table")
+conflict_prefer("View", "utils")
 
 options(gtsummary.tbl_summary.percent_fun = function(x) style_number(x * 100, digits = 1))
 
@@ -68,7 +72,7 @@ lapply(required.cran.packages, require, character.only=T)
 
 # daoh.tools.path = 'P:/FMHSfiles/SCIENCE/packages/R/daohtools'
 # daoh.tools.path = '../daohtools'
-# devtools::document(daoh.tools.path)
+# # devtools::document(daoh.tools.path)
 # devtools::build(daoh.tools.path)
 # devtools::install(daoh.tools.path, dependencies = T, reload = T)
 # devtools::install('"P:/FMHSfiles/SCIENCE/MOH_general/icd10amachi"', dependencies = T, reload = T)

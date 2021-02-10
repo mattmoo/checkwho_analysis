@@ -2,7 +2,7 @@
 ##'
 ##' @title
 ##' @param input.dt
-draw.daoh.mortality.plot <- function(input.dt) {
+draw.daoh.mortality.plot <- function(input.dt, transform.y = TRUE) {
 
   
   y.scale.labels = function(x)
@@ -36,6 +36,14 @@ draw.daoh.mortality.plot <- function(input.dt) {
     labels = y.scale.labels,
     minor_breaks = NULL,
     breaks = ybreaks,
+    expand = c(0.001, 0.001),
+    limits = c(0, .25)
+  )
+  
+  notransformedYScale = scale_y_continuous(
+    labels = y.scale.labels,
+    minor_breaks = NULL,
+    breaks = ybreaks[ybreaks>=.01],
     expand = c(0.001, 0.001),
     limits = c(0, .25)
   )
@@ -74,7 +82,7 @@ draw.daoh.mortality.plot <- function(input.dt) {
     # labs(title=paste("Frequency for Overall DAOH (both groups, n=", nGroup1+nGroup2, ")", sep="")) +
     labs(x="Days alive and out of hospital (90 days)", y = element_blank()) +
     # labs(x="Days alive and out of hospital", y="Percentage") +
-    transformedYScale +
+    # transformedYScale +
     xScale +
     # theme(plot.title = element_text(hjust = 0.5)) +
     # theme(text = element_text(size=figureTextSize)) +
@@ -84,5 +92,13 @@ draw.daoh.mortality.plot <- function(input.dt) {
                     labels=c("Alive", "Dead")) + 
     theme(legend.position = "none") 
     # guides(fill=guide_legend()) 
+  
+  if (transform.y) {
+    p = p + transformedYScale
+  } else {
+    p = p + notransformedYScale
+  }
+  
+  return(p)
 
 }

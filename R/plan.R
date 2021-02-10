@@ -66,9 +66,13 @@ checkwho_plan =
       # 'CCI',
       'ethnicity',
       # 'acuity',
-      'clinical.severity'
-      # 'icd.chapter.grouped'
+      # 'clinical.severity'
+      'icd.chapter.grouped'
     ),
+    
+    # Column names for variables on which to calculate DRA risk groups.
+    dra.mortality.col.name = 'mort.90.day',
+    dra.los.col.name = 'LOS',
     
     daoh.covariates = mortality.covariates,
     
@@ -450,14 +454,14 @@ checkwho_plan =
     
     dra.risk.adjust.model.list = list(
       MORT = calculate.dra.risk.adjustment.glm(
-        input.dt = input.dt,
-        outcome.col.name = mortality.col.name,
+        input.dt = regression.dt,
+        outcome.col.name = dra.mortality.col.name,
         covariate.col.names = risk.adjust.on.covariates,
         family = binomial(link = 'logit')
       ),
       LOS = calculate.dra.risk.adjustment.glm(
-        input.dt = input.dt,
-        outcome.col.name = mortality.col.name,
+        input.dt = regression.dt,
+        outcome.col.name = dra.los.col.name,
         covariate.col.names = risk.adjust.on.covariates,
         outlier.limits = c(-Inf, 200),
         family = poisson
@@ -473,6 +477,14 @@ checkwho_plan =
       dra.risk.adjust.model.list
     ), 
     
+    dra.riskgp.plot = generate.dra.riskgp.plot(
+      risk.adjusted.regression.dt),
+    
+    dra.riskgp.group.diff.plot = generate.dra.riskgp.group.diff.plot(
+      risk.adjusted.regression.dt),
+    
+    dra.riskgp.daoh.animation = generate.dra.riskgp.daoh.animation(
+      risk.adjusted.regression.dt),
     
     # Data.table for generating figures etc.
     pre.post.figure.dt = generate.pre.post.figure.dt(risk.adjusted.regression.dt),
@@ -480,6 +492,43 @@ checkwho_plan =
                                                            ssc.implementation.start,
                                                            ssc.implementation.end),
 
+    # Generate a Survey object from the calculated weights.
+    pre.post.svy.des =
+      svydesign(
+        id = as.formula(paste('~', 'index.event.id')),
+        strata =  as.formula(paste('~', 'SSC')),
+        weights =  ~ SSC.dra.weight,
+        data = pre.post.figure.dt
+      ),
+    
+    
+    # Pre/post summaries for graphing.
+    daoh.risk.adj.pre.post.summary.dt =
+      generate.daoh.pre.post.summary.dt(pre.post.figure.dt,
+                                        dra = TRUE),
+    daoh.raw.pre.post.summary.dt = 
+      generate.daoh.pre.post.summary.dt(pre.post.figure.dt,
+                                        dra = FALSE),
+    # Combined, mainly for animation.
+    daoh.combined.pre.post.summary.dt = rbindlist(list(
+      daoh.risk.adj.pre.post.summary.dt,
+      daoh.raw.pre.post.summary.dt
+    )), 
+    
+    risk.adjustment.plot.animation = plot.daoh.barplot(
+      daoh.combined.pre.post.summary.dt,
+      daoh.col.name = 'daoh',
+      by.group = 'SSC',
+      xlimits = c(-0.5, 90.5),
+      y.aes = 'prop'
+    ) +
+      gganimate::transition_states(
+        states = adjustment,
+        transition_length = 2,
+        state_length = 1,
+        wrap = FALSE
+      ) +
+      ease_aes('cubic-in-out'),
     
     # Draw plots
     period.rect.plot = draw.period.rect.plot(
@@ -628,19 +677,15 @@ checkwho_plan =
       period.rect.plot = period.rect.plot
     ),
     
-    daoh.risk.adj.pre.post.plot = plot.daoh.density(
-      input.dt = pre.post.figure.dt,
-      by.group = 'SSC',
-      daoh.col.name = 'daoh.risk.adj',
-      xlimits = pre.post.figure.dt[, c(min(daoh.risk.adj) - 0.5,
-                                       max(daoh.risk.adj) + 0.5)]
-    ),
     
-    daoh.pre.post.plot = plot.daoh.density(
-      input.dt = pre.post.figure.dt,
-      by.group = 'SSC',
-      daoh.col.name = 'daoh'
-    ),
+    daoh.pre.post.raw.plot = plot.daoh.histogram(input.dt = pre.post.figure.dt,
+                                                 by.group = 'SSC',
+                                                 daoh.col.name = 'daoh'),
+
+    daoh.pre.post.risk.adj.plot = plot.daoh.barplot(input.summary.dt = daoh.risk.adj.pre.post.summary.dt,
+                                                    by.group = 'SSC',
+                                                    daoh.col.name = 'daoh'),
+    
     
     rename.coefficients.list = c(
       'Constant' = '(Intercept)',
@@ -919,7 +964,22 @@ checkwho_plan =
     ),
     # A DAOH plot with mortal cases highlighted
     daoh.mortality.plot = draw.daoh.mortality.plot(
-      input.dt = time.series.figure.dt
+      input.dt = time.series.figure.dt,
+      transform.y = TRUE
+    ),
+    
+    daoh.mortality.notransform.plot = draw.daoh.mortality.plot(
+      input.dt = time.series.figure.dt,
+      transform.y = FALSE
+    ),
+    
+    pre.post.daoh.statistics.list = generate.pre.post.daoh.statistics.list(
+      pre.post.figure.dt,
+      pre.post.svy.des
+    ),
+    
+    pre.post.daoh.statistics.ht = draw.pre.post.daoh.statistics.ht(
+      pre.post.daoh.statistics.list
     ),
     
     # demographic.table.html = draw.demographic.table.html(
@@ -931,6 +991,8 @@ checkwho_plan =
       pre.post.figure.dt,
       time.series.figure.dt
     ),
+    
+    age.plot = ggplot(time.series.figure.dt, aes(age)) + geom_histogram(binwidth = 1),
     
     #A DAOH table with means and quantiles, all compared.
     comprehensive.daoh.summary.ht =
@@ -1116,15 +1178,24 @@ checkwho_plan =
       aspect.ratio = 1.5
     ),
     
-    publication.table.comprehensive.daoh.summary = generate.publication.table(
+    # publication.table.comprehensive.daoh.summary = generate.publication.table(
+    #   name = 'daohTab',
+    #   input.table = comprehensive.daoh.summary.ht,
+    #   caption = paste0(
+    #     "DAOH\u2089\u2080 for the Extended Period (Extended), the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
+    #     "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. Differences in other values were assessed using absolute difference and ",
+    #     "p-values generated using permutation tests with ",
+    #     format(n.iterations.for.perm.tests, big.mark = ','),
+    #     " permutations (SSC: Surgical Safety Checklist)."
+    #   )
+    # ),
+    # 
+    publication.table.rev.comprehensive.daoh.summary = generate.publication.table(
       name = 'daohTab',
-      input.table = comprehensive.daoh.summary.ht,
+      input.table = pre.post.daoh.statistics.ht,
       caption = paste0(
-        "DAOH\u2089\u2080 for the Extended Period (Extended), the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
-        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. Differences in other values were assessed using absolute difference and ",
-        "p-values generated using permutation tests with ",
-        format(n.iterations.for.perm.tests, big.mark = ','),
-        " permutations (SSC: Surgical Safety Checklist)."
+        "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
+        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
       )
     ),
     

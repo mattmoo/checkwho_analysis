@@ -11,10 +11,48 @@ lapply(list.files("./R", full.names = TRUE), source)
 drake_config(checkwho_plan, 
              lock_envir = FALSE)
 
+rev3.targets = c(
+  'report.output.dir',
+  'pre.post.svy.des',
+  'daoh.mortality.plot',
+  'daoh.mortality.notransform.plot',
+  'daoh.pre.post.raw.plot',
+  'daoh.pre.post.risk.adj.plot',
+  'daoh.combined.pre.post.summary.dt',
+  'risk.adjustment.plot.animation',
+  'dra.riskgp.plot',
+  'dra.riskgp.group.diff.plot',
+  'dra.riskgp.daoh.animation',
+  'pre.post.daoh.statistics.list',
+  'pre.post.daoh.statistics.ht',
+  'publication.table.demographics',
+  'publication.table.rev.comprehensive.daoh.summary'
+  
+)
 
 # p = vis_drake_graph(checkwho_plan)
-make(checkwho_plan, 'risk.adjusted.regression.dt')
+make(checkwho_plan, rev3.targets)
+# make(checkwho_plan, 'pre.post.svy.des')
+loadd(rev3.targets)
 asassasa
+
+animate(
+  plot = risk.adjustment.plot.animation,
+  height = 1080,
+  width = 1920,
+  duration = 3, 
+  fps = 60,
+  renderer = av_renderer(file.path(report.output.dir, 'risk_adjustment_plot_animation.mp4'))
+)
+
+animate(
+  plot = dra.riskgp.daoh.animation,
+  height = 1080,
+  width = 1920,
+  duration = 12, 
+  fps = 60,
+  renderer = av_renderer(file.path(report.output.dir, 'dra_riskgp_daoh_animation.mp4'))
+)
 
 # make(checkwho_plan, targets = 'mort.regression.abbreviated.plot', force = TRUE)
 make(checkwho_plan, targets = c('publication.results.demographics',

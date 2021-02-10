@@ -10,11 +10,13 @@ generate.time.series.figure.dt <- function(risk.adjusted.regression.dt,
   
   time.series.figure.dt = risk.adjusted.regression.dt[time.series.eligible.and.unique == TRUE,
                                                    .(
+                                                     index.event.id,
                                                      PRIM_HCU,
                                                      # adhb.theatre.event.id,
                                                      adhb.event.id,
                                                      moh.event.id,
                                                      daoh.period.start,
+                                                     age,
                                                      age.group,
                                                      ethnicity,
                                                      maori.ethnicity,
@@ -27,8 +29,11 @@ generate.time.series.figure.dt <- function(risk.adjusted.regression.dt,
                                                      icd.chapter.grouped,
                                                      daoh,
                                                      daoh.risk.adj,
+                                                     LOS,
                                                      mort.30.day,
-                                                     mort.90.day
+                                                     mort.90.day,
+                                                     SSC.dra.weight,
+                                                     riskgp
                                                    )]
   
   time.series.figure.dt[, SSC := 'Implementation']

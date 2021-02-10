@@ -17,7 +17,9 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
                                                           'Time-series'))]
   
   demo.dt = rbindlist(list(pre.post.figure.dt,
-                           time.series.figure.dt))
+                           time.series.figure.dt),
+                      use.names = TRUE,
+                      fill = TRUE)
   
   rename.list = list(
     gender ~ 'Gender',
@@ -25,7 +27,8 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
     ethnicity ~ 'Ethnic group',
     acuity ~ 'ASA Acuity',
     asa.status ~ 'ASA Physical Status',
-    icd.chapter.grouped ~ 'Procedure type'
+    icd.chapter.grouped ~ 'Procedure type',
+    clinical.severity ~ 'Clinical Severity'
   )
   
   pre.post.input.dt = droplevels(demo.dt[demo.group %in% c('Pre-SSC', 'Post-SSC'),
@@ -35,6 +38,7 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
                                            acuity,
                                            asa.status,
                                            icd.chapter.grouped,
+                                           clinical.severity,
                                            demo.group)])
   time.series.input.dt = droplevels(time.series.figure.dt[, .(gender,
                                                               age.group,
@@ -42,6 +46,7 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
                                                               acuity,
                                                               asa.status,
                                                               icd.chapter.grouped,
+                                                              clinical.severity,
                                                               demo.group)])
   time.series.input.dt[, demo.group := NULL]
   

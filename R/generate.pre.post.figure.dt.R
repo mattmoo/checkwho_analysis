@@ -9,6 +9,7 @@ generate.pre.post.figure.dt <- function(risk.adjusted.regression.dt) {
   pre.post.figure.dt = risk.adjusted.regression.dt[pre.eligible.and.unique == TRUE |
                                                      post.eligible.and.unique == TRUE,
                                                    .(
+                                                     index.event.id,
                                                      PRIM_HCU,
                                                      # adhb.theatre.event.id,
                                                      adhb.event.id,
@@ -17,6 +18,7 @@ generate.pre.post.figure.dt <- function(risk.adjusted.regression.dt) {
                                                      post.eligible.and.unique,
                                                      SSC,
                                                      daoh.period.start,
+                                                     age,
                                                      age.group,
                                                      ethnicity,
                                                      maori.ethnicity,
@@ -29,8 +31,11 @@ generate.pre.post.figure.dt <- function(risk.adjusted.regression.dt) {
                                                      icd.chapter.grouped,
                                                      daoh,
                                                      daoh.risk.adj,
+                                                     LOS,
                                                      mort.30.day,
-                                                     mort.90.day
+                                                     mort.90.day,
+                                                     SSC.dra.weight,
+                                                     riskgp
                                                    )]
   
 

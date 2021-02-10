@@ -42,8 +42,9 @@ risk.adjust.regression.dt <- function(input.dt,
                               model.list = dra.risk.adjust.model.list)
   
   
-  risk.adjusted.input.dt = daohtools::calculate.dra.weights(input.dt = risk.adjusted.input.dt,
-                                                            group.col.name = 'SSC')
+  risk.adjusted.input.dt = calculate.dra.weights(input.dt = risk.adjusted.input.dt,
+                                                            group.col.name = 'SSC',
+                                                            weight.col.name = 'SSC.dra.weight')
   
   setorder(risk.adjusted.input.dt, index.event.id)
   
