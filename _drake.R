@@ -14,6 +14,7 @@ drake_config(checkwho_plan,
 rev3.targets = c(
   'report.output.dir',
   'pre.post.svy.des',
+  'pre.post.raw.svy.des',
   'daoh.mortality.plot',
   'daoh.mortality.notransform.plot',
   'daoh.pre.post.raw.plot',
@@ -29,7 +30,7 @@ rev3.targets = c(
   'publication.table.rev.comprehensive.daoh.summary'
   
 )
-
+# make(checkwho_plan, 'pre.post.daoh.statistics.list')
 # p = vis_drake_graph(checkwho_plan)
 make(checkwho_plan, rev3.targets)
 # make(checkwho_plan, 'pre.post.svy.des')
@@ -47,11 +48,12 @@ animate(
 
 animate(
   plot = dra.riskgp.daoh.animation,
-  height = 1080,
-  width = 1920,
+  height = 720,
+  width = 1280,
   duration = 12, 
-  fps = 60,
-  renderer = av_renderer(file.path(report.output.dir, 'dra_riskgp_daoh_animation.mp4'))
+  fps = 30,
+  # renderer = av_renderer(file.path(report.output.dir, 'dra_riskgp_daoh_animation.mp4'),
+  renderer = gifski_renderer(file.path(report.output.dir, 'dra_riskgp_daoh_animation.gif'))
 )
 
 # make(checkwho_plan, targets = 'mort.regression.abbreviated.plot', force = TRUE)

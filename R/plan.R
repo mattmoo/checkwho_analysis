@@ -501,6 +501,14 @@ checkwho_plan =
         data = pre.post.figure.dt
       ),
     
+    pre.post.raw.svy.des =
+      svydesign(
+        id = as.formula(paste('~', 'index.event.id')),
+        strata =  as.formula(paste('~', 'SSC')),
+        weights =  ~ 1,
+        data = pre.post.figure.dt
+      ),
+    
     
     # Pre/post summaries for graphing.
     daoh.risk.adj.pre.post.summary.dt =
@@ -509,6 +517,7 @@ checkwho_plan =
     daoh.raw.pre.post.summary.dt = 
       generate.daoh.pre.post.summary.dt(pre.post.figure.dt,
                                         dra = FALSE),
+    
     # Combined, mainly for animation.
     daoh.combined.pre.post.summary.dt = rbindlist(list(
       daoh.risk.adj.pre.post.summary.dt,
@@ -974,7 +983,7 @@ checkwho_plan =
     ),
     
     pre.post.daoh.statistics.list = generate.pre.post.daoh.statistics.list(
-      pre.post.figure.dt,
+      pre.post.raw.svy.des,
       pre.post.svy.des
     ),
     

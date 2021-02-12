@@ -23,6 +23,7 @@ required.cran.packages = list(
   "gganimate",
   "scico",
   "forcats",
+  "RColorBrewer",
   
   "Hmisc",
   "stringr",
