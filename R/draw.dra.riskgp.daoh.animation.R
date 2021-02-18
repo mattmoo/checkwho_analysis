@@ -7,7 +7,7 @@
 generate.dra.riskgp.daoh.animation <- function(input.dt) {
 
   
-  input.dt[, riskgp.numeric := as.numeric(str_extract(riskgpMORT, '\\d+')) + as.numeric(str_extract(riskgpLOS, '\\d+'))]
+  input.dt[, riskgp.numeric := as.numeric(str_extract(SSC.riskgpMORT, '\\d+')) + as.numeric(str_extract(SSC.riskgpLOS, '\\d+'))]
   nb.cols = length(unique(input.dt[,riskgp.numeric]))
   
   
@@ -15,7 +15,7 @@ generate.dra.riskgp.daoh.animation <- function(input.dt) {
   
   input.summary.dt = merge(x = data.table(expand.grid(daoh = 0:90, riskgp.numeric = (unique(input.dt[,riskgp.numeric])))),
                            y = calculate.summary.dt(input.dt, by.group = 'riskgp.numeric'),
-                           by = c('daoh', 'riskgp.numeric'),
+                           by = c('daoh', 'SSC.riskgp.numeric'),
                            all.x = TRUE)
   input.summary.dt[is.na(N), N := 0]
   input.summary.dt[is.na(prop), prop := 0]

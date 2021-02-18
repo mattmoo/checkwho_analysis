@@ -102,10 +102,7 @@ checkwho_plan =
     # ),
 
     changepoint.measure.list = c(
-      "Exceeds RA DAOH 0.1" = "exceeds.daoh.risk.adj.10",
-      "Exceeds RA DAOH 0.25" = "exceeds.daoh.risk.adj.25",
-      "Exceeds RA DAOH Median" = "exceeds.daoh.risk.adj.median",
-      "Exceeds RA DAOH 0.75" = "exceeds.daoh.risk.adj.75",
+      "Mean DAOH" = "daoh",
       "30-day mortality" = "mort.30.day",
       "90-day mortality" = "mort.90.day"
     ),
@@ -144,153 +141,138 @@ checkwho_plan =
     
     # Priors for changepoint Bayesian analysis
     prior.positive.gradient.list = list(
-      # Gradient initially negative
-      month.numeric_1 = "dnorm(0, 3 / (MAXX - MINX)) T(0,)"
+      # Gradient initially positive
+      date.numeric_1 = "dnorm(0, 3 / (MAXX - MINX)) T(0,)"
       ,
-      # Gradient greater after implementation
-      month.numeric_2 = "dnorm(month.numeric_1, 3 / (MAXX - MINX)) T(month.numeric_1,)"
-      ,
-      # Gradient negative after
-      month.numeric_3 = "dnorm(0, 3 / (MAXX - MINX)) T(0,)"
+      # # Gradient greater after implementation
+      # month.numeric_2 = "dnorm(month.numeric_1, 3 / (MAXX - MINX)) T(month.numeric_1,)"
+      # ,
+      # Gradient same after
+      date.numeric_3 = "date.numeric_1"
       ),
     
     prior.negative.gradient.list = list(
       # Gradient initially negative
-      month.numeric_1 = "dnorm(0, 3 / (MAXX - MINX)) T(,0)"
+      date.numeric_1 = "dnorm(0, 3 / (MAXX - MINX)) T(,0)"
       ,
-      # Gradient greater after implementation
-      month.numeric_2 = "dnorm(month.numeric_1, 3 / (MAXX - MINX)) T(,month.numeric_1)"
-      ,
-      # Gradient negative after
-      month.numeric_3 = "dnorm(0, 3 / (MAXX - MINX)) T(,0)"
+      # # Gradient greater after implementation
+      # month.numeric_2 = "dnorm(month.numeric_1, 3 / (MAXX - MINX)) T(,month.numeric_1)"
+      # ,
+      # Gradient same after
+      date.numeric_3 = "date.numeric_1"
       
     ),
     
-    # A default prior using Dirichlet distribution
-    prior.changepoint.dirichlet = list(
-      cp_1 = "dirichlet(1)",
-      cp_2 = "dirichlet(1)"
-    ),
-    
-    prior.changepoint.during.intervention.dunif.list = list(
-      # Change point one between implementation start and finish
-      cp_1 = paste0(
-        "dunif(",
-        as.numeric(as.Date(ssc.implementation.start)),
-        ',',
-        as.numeric(as.Date(ssc.implementation.end)),
-        ")"
-      )
-    ),
-    
-    # prior.changepoint.during.intervention.dnorm.list = list(
-    #   # Change point one between implementation start and finish
-    #   cp_1 = paste0(
-    #     "dnorm(",
-    #     as.numeric(as.Date(ssc.implementation.end)),
-    #     ',',
-    #     (as.numeric(as.Date(ssc.implementation.end)) - as.numeric(as.Date(ssc.implementation.start)))/2,
-    #     ") "
-    #   )
+    # # A default prior using Dirichlet distribution
+    # prior.changepoint.dirichlet = list(
+    #   cp_1 = "dirichlet(1)",
+    #   cp_2 = "dirichlet(1)"
     # ),
     # 
+    # prior.changepoint.during.intervention.dunif.list = list(
+    #   # Change point one between implementation start and finish
+    #   cp_1 = paste0(
+    #     "dunif(",
+    #     as.numeric(as.Date(ssc.implementation.start)),
+    #     ',',
+    #     as.numeric(as.Date(ssc.implementation.end)),
+    #     ")"
+    #   )
+    # ),
     
-    # For restricting values of first changepoint so that they're not right at the
-    # start or end.
-    prior.changepoint.cropped.dunif.list = list(
-      # Change point in entire period
-      cp_1 = paste0(
-        "dunif(MINX + 240, MAXX - 240)"
-      )
-    ),
-    
-    # Assemble hypotheses for DAOH (+gradient) and mortality (-gradient)
-    changepoint.prior.dirichlet.daoh = c(
-      prior.changepoint.dirichlet
-      ,
-      prior.positive.gradient.list
-    ),
-    
-    changepoint.prior.dirichlet.mortality = c(
-      prior.changepoint.dirichlet
-      ,
-      prior.negative.gradient.list
-    ),
+    prior.changepoint.during.intervention.dnorm.list = list(
+      # Change point one between implementation start and finish
+      cp_1 = paste0("dnorm(",
+                    as.numeric(as.Date(post.period.start)),
+                    ", (MINX - MAXX)/10) T(",
+                    as.numeric(as.Date(pre.period.end)),
+                    ",)")), 
 
-    changepoint.prior.dunif.daoh = c(
-      prior.changepoint.during.intervention.dunif.list
-      ,
-      prior.positive.gradient.list
-    ),
     
-    changepoint.prior.dunif.mortality = c(
-      prior.changepoint.during.intervention.dunif.list
-      ,
-      prior.negative.gradient.list
-    ),
+    # # For restricting values of first changepoint so that they're not right at the
+    # # start or end.
+    # prior.changepoint.cropped.dunif.list = list(
+    #   # Change point in entire period
+    #   cp_1 = paste0(
+    #     "dunif(MINX + 240, MAXX - 240)"
+    #   )
+    # ),
     
-    # changepoint.prior.dnorm.daoh = c(
-    #   prior.changepoint.during.intervention.dnorm.list
+    # # Assemble hypotheses for DAOH (+gradient) and mortality (-gradient)
+    # changepoint.prior.dirichlet.daoh = c(
+    #   prior.changepoint.dirichlet
     #   ,
     #   prior.positive.gradient.list
     # ),
     # 
-    # changepoint.prior.dnorm.mortality = c(
-    #   prior.changepoint.during.intervention.dnorm.list
+    # changepoint.prior.dirichlet.mortality = c(
+    #   prior.changepoint.dirichlet
+    #   ,
+    #   prior.negative.gradient.list
+    # ),
+    # 
+    # changepoint.prior.dunif.daoh = c(
+    #   prior.changepoint.during.intervention.dunif.list
+    #   ,
+    #   prior.positive.gradient.list
+    # ),
+    # 
+    # changepoint.prior.dunif.mortality = c(
+    #   prior.changepoint.during.intervention.dunif.list
     #   ,
     #   prior.negative.gradient.list
     # ),
     
-    changepoint.prior.gradient.change.daoh = c(
-      prior.changepoint.cropped.dunif.list,
+    changepoint.prior.dnorm.daoh = c(
+      prior.changepoint.during.intervention.dnorm.list
+      ,
       prior.positive.gradient.list
     ),
-    
-    changepoint.prior.gradient.change.mortality = c(
-      prior.changepoint.cropped.dunif.list,
+
+    changepoint.prior.dnorm.mortality = c(
+      prior.changepoint.during.intervention.dnorm.list
+      ,
       prior.negative.gradient.list
     ),
     
-    # Put changepoints into list, one for each measure. All have gradient
-    # restrictions.
-    # Default Dirichlet distribution.
-    changepoint.prior.dirichlet.list = list(
-      changepoint.prior.dirichlet.daoh,
-      changepoint.prior.dirichlet.daoh,
-      changepoint.prior.dirichlet.daoh,
-      changepoint.prior.dirichlet.daoh,
-      changepoint.prior.dirichlet.mortality,
-      changepoint.prior.dirichlet.mortality
-    ),
+    # changepoint.prior.gradient.change.daoh = c(
+    #   prior.changepoint.cropped.dunif.list,
+    #   prior.positive.gradient.list
+    # ),
+    # 
+    # changepoint.prior.gradient.change.mortality = c(
+    #   prior.changepoint.cropped.dunif.list,
+    #   prior.negative.gradient.list
+    # ),
+    
+    # # Put changepoints into list, one for each measure. All have gradient
+    # # restrictions.
+    # # Default Dirichlet distribution.
+    # changepoint.prior.dirichlet.list = list(
+    #   changepoint.prior.dirichlet.daoh,
+    #   changepoint.prior.dirichlet.mortality,
+    #   changepoint.prior.dirichlet.mortality
+    # ),
+    # 
+    # changepoint.prior.dunif.list = list(
+    #   changepoint.prior.dunif.daoh,
+    #   changepoint.prior.dunif.mortality,
+    #   changepoint.prior.dunif.mortality
+    # ),
     
     # Priors with a changepoint in the implementation period .
-    changepoint.prior.dunif.list = list(
-      changepoint.prior.dunif.daoh,
-      changepoint.prior.dunif.daoh,
-      changepoint.prior.dunif.daoh,
-      changepoint.prior.dunif.daoh,
-      changepoint.prior.dunif.mortality,
-      changepoint.prior.dunif.mortality
-    ),
-
     # changepoint.prior.dnorm.list = list(
-    #   changepoint.prior.dnorm.daoh,
-    #   changepoint.prior.dnorm.daoh,
-    #   changepoint.prior.dnorm.daoh,
     #   changepoint.prior.dnorm.daoh,
     #   changepoint.prior.dnorm.mortality,
     #   changepoint.prior.dnorm.mortality
     # ),
     
-    # Priors with a changepoint anywhere except the first and last few months.
-    changepoint.prior.gradient.change.list = list(
-      changepoint.prior.gradient.change.daoh,
-      changepoint.prior.gradient.change.daoh,
-      changepoint.prior.gradient.change.daoh,
-      changepoint.prior.gradient.change.daoh,
-      changepoint.prior.gradient.change.mortality,
-      changepoint.prior.gradient.change.mortality
-    ),
+    # # Priors with a changepoint anywhere except the first and last few months.
+    # changepoint.prior.gradient.change.list = list(
+    #   changepoint.prior.gradient.change.daoh,
+    #   changepoint.prior.gradient.change.mortality,
+    #   changepoint.prior.gradient.change.mortality
+    # ),
     
     # Construct input directories.
     moh.input.directory = file.path(base.input.directory, moh.csv.directory),
@@ -452,7 +434,7 @@ checkwho_plan =
       family = 'binomial'
     ),
     
-    dra.risk.adjust.model.list = list(
+    SSC.dra.risk.adjust.model.list = list(
       MORT = calculate.dra.risk.adjustment.glm(
         input.dt = regression.dt,
         outcome.col.name = dra.mortality.col.name,
@@ -468,22 +450,54 @@ checkwho_plan =
       )
     ),
     
+    ethnicity.dra.risk.adjust.model.list = list(
+      MORT = calculate.dra.risk.adjustment.glm(
+        input.dt = regression.dt,
+        outcome.col.name = dra.mortality.col.name,
+        covariate.col.names = risk.adjust.on.covariates[risk.adjust.on.covariates != 'ethnicity'],
+        family = binomial(link = 'logit')
+      ),
+      LOS = calculate.dra.risk.adjustment.glm(
+        input.dt = regression.dt,
+        outcome.col.name = dra.los.col.name,
+        covariate.col.names = risk.adjust.on.covariates[risk.adjust.on.covariates != 'ethnicity'],
+        outlier.limits = c(-Inf, 200),
+        family = poisson
+      )
+    ),
+    
     # Generate a data.table with risk adjusted values
     risk.adjusted.regression.dt = risk.adjust.regression.dt(
       regression.dt,
       daoh.risk.adjust.model,
       mort.90.risk.adjust.model,
       mort.30.risk.adjust.model,
-      dra.risk.adjust.model.list
+      SSC.dra.risk.adjust.model.list,
+      ethnicity.dra.risk.adjust.model.list
     ), 
     
-    dra.riskgp.plot = generate.dra.riskgp.plot(
-      risk.adjusted.regression.dt),
+    riskgp.axis.names = c('Mortality risk', 'Length of stay risk'),
     
-    dra.riskgp.group.diff.plot = generate.dra.riskgp.group.diff.plot(
-      risk.adjusted.regression.dt),
+    SSC.dra.riskgp.plot = generate.dra.riskgp.plot(
+      risk.adjusted.regression.dt,
+      riskgp.axis.names = riskgp.axis.names,
+      shape.scale = c(1,20)),
     
-    dra.riskgp.daoh.animation = generate.dra.riskgp.daoh.animation(
+    SSC.dra.riskgp.group.diff.plot = draw.dra.riskgp.group.diff.plot(
+      risk.adjusted.regression.dt,
+      summary.col.name = 'SSC',
+      riskgp.col.names = c('SSC.riskgpMORT', 'SSC.riskgpLOS'),
+      riskgp.axis.names = riskgp.axis.names,
+      shape.scale = c(1,20)),
+    
+    ethnicity.dra.riskgp.group.diff.plot = draw.dra.riskgp.group.diff.plot(
+      risk.adjusted.regression.dt,
+      summary.col.name = 'maori.ethnicity',
+      riskgp.col.names = c('ethnicity.riskgpMORT', 'ethnicity.riskgpLOS'),
+      riskgp.axis.names = riskgp.axis.names,
+      shape.scale = c(1,20)),
+    
+    SSC.dra.riskgp.daoh.animation = generate.dra.riskgp.daoh.animation(
       risk.adjusted.regression.dt),
     
     # Data.table for generating figures etc.
@@ -509,6 +523,29 @@ checkwho_plan =
         data = pre.post.figure.dt
       ),
     
+    time.series.raw.svy.des =
+      svydesign(
+        id = as.formula(paste('~', 'index.event.id')),
+        strata =  as.formula(paste('~', 'SSC')),
+        weights =  ~ 1,
+        data = time.series.figure.dt[!is.na(ethnicity.dra.weight)]
+      ),
+    
+    ethnicity.svy.des =
+      svydesign(
+        id = as.formula(paste('~', 'index.event.id')),
+        strata =  as.formula(paste('~', 'ethnicity')),
+        weights =  ~ ethnicity.dra.weight,
+        data = time.series.figure.dt[!is.na(ethnicity.dra.weight)]
+      ),
+    
+    maori.ethnicity.svy.des =
+      svydesign(
+        id = as.formula(paste('~', 'index.event.id')),
+        strata =  as.formula(paste('~', 'maori.ethnicity')),
+        weights =  ~ ethnicity.dra.weight,
+        data = time.series.figure.dt[!is.na(ethnicity.dra.weight)]
+      ),
     
     # Pre/post summaries for graphing.
     daoh.risk.adj.pre.post.summary.dt =
@@ -524,7 +561,7 @@ checkwho_plan =
       daoh.raw.pre.post.summary.dt
     )), 
     
-    risk.adjustment.plot.animation = plot.daoh.barplot(
+    SSC.risk.adjustment.plot.animation = plot.daoh.barplot(
       daoh.combined.pre.post.summary.dt,
       daoh.col.name = 'daoh',
       by.group = 'SSC',
@@ -982,13 +1019,47 @@ checkwho_plan =
       transform.y = FALSE
     ),
     
-    pre.post.daoh.statistics.list = generate.pre.post.daoh.statistics.list(
-      pre.post.raw.svy.des,
-      pre.post.svy.des
+    pre.post.daoh.statistics.list = generate.svy.statistics.list(
+      raw.svy.des = pre.post.raw.svy.des,
+      svy.des = pre.post.svy.des,
+      by.group = 'SSC', 
+      outcome = 'daoh'
     ),
     
-    pre.post.daoh.statistics.ht = draw.pre.post.daoh.statistics.ht(
-      pre.post.daoh.statistics.list
+    
+    pre.post.daoh.statistics.ht = draw.svy.statistics.ht(
+      pre.post.daoh.statistics.list,
+      by.group = 'SSC',
+      calculate.difference = TRUE,
+      suppress.quantile.cis = TRUE
+    ),
+    
+    ethnicity.daoh.statistics.list = generate.svy.statistics.list(
+      raw.svy.des = time.series.raw.svy.des,
+      svy.des = ethnicity.svy.des,
+      by.group = 'ethnicity', 
+      outcome = 'daoh'
+    ),
+    
+    ethnicity.daoh.statistics.ht = draw.svy.statistics.ht(
+      ethnicity.daoh.statistics.list,
+      by.group = 'ethnicity',
+      calculate.difference = FALSE,
+      suppress.quantile.cis = TRUE
+    ),
+    
+    maori.ethnicity.daoh.statistics.list = generate.svy.statistics.list(
+      raw.svy.des = time.series.raw.svy.des,
+      svy.des = maori.ethnicity.svy.des,
+      by.group = 'maori.ethnicity', 
+      outcome = 'daoh'
+    ),
+    
+    maori.ethnicity.daoh.statistics.ht = draw.svy.statistics.ht(
+      maori.ethnicity.daoh.statistics.list,
+      by.group = 'maori.ethnicity',
+      calculate.difference = TRUE,
+      suppress.quantile.cis = TRUE
     ),
     
     # demographic.table.html = draw.demographic.table.html(
@@ -1021,28 +1092,28 @@ checkwho_plan =
     #   cores = mcp.args$cores
     # ), 
     
-    changepoint.model.with.prior.dirichlet.list = generate.changepoint.model.list(
-      time.series.figure.dt,
-      changepoint.measure.list,
-      ssc.implementation.start,
-      ssc.implementation.end,
-      changepoint.model.func = changepoint.model.func,
-      changepoint.prior.list = changepoint.prior.dirichlet.list,
-      adapt = mcp.args$adapt,
-      iter = mcp.args$iter,
-      cores = mcp.args$cores
-    ), 
-    
-    changepoint.model.with.prior.dunif.list = generate.changepoint.model.list(
-      time.series.figure.dt,
-      changepoint.measure.list,
-      ssc.implementation.start,
-      ssc.implementation.end,
-      changepoint.prior.dunif.list,
-      adapt = mcp.args$adapt,
-      iter = mcp.args$iter,
-      cores = mcp.args$cores
-    ),
+    # changepoint.model.with.prior.dirichlet.list = generate.changepoint.model.list(
+    #   time.series.figure.dt,
+    #   changepoint.measure.list,
+    #   ssc.implementation.start,
+    #   ssc.implementation.end,
+    #   changepoint.model.func = changepoint.model.func,
+    #   changepoint.prior.list = changepoint.prior.dirichlet.list,
+    #   adapt = mcp.args$adapt,
+    #   iter = mcp.args$iter,
+    #   cores = mcp.args$cores
+    # ), 
+    # 
+    # changepoint.model.with.prior.dunif.list = generate.changepoint.model.list(
+    #   time.series.figure.dt,
+    #   changepoint.measure.list,
+    #   ssc.implementation.start,
+    #   ssc.implementation.end,
+    #   changepoint.prior.dunif.list,
+    #   adapt = mcp.args$adapt,
+    #   iter = mcp.args$iter,
+    #   cores = mcp.args$cores
+    # ),
     
     # changepoint.model.with.prior.dnorm.list = generate.changepoint.model.list(
     #   time.series.figure.dt,
@@ -1055,29 +1126,70 @@ checkwho_plan =
     #   iter = mcp.args$iter
     # ), 
     
-    changepoint.model.with.prior.gradient.change.list = generate.changepoint.model.list(
-      time.series.figure.dt,
-      changepoint.measure.list,
-      ssc.implementation.start,
-      ssc.implementation.end,
-      changepoint.prior.list = changepoint.prior.gradient.change.list,
-      changepoint.model.func = changepoint.model.func,
-      adapt = mcp.args$adapt,
-      iter = mcp.args$iter,
-      cores = mcp.args$cores
-    ), 
+    # changepoint.model.with.prior.gradient.change.list = generate.changepoint.model.list(
+    #   time.series.figure.dt,
+    #   changepoint.measure.list,
+    #   ssc.implementation.start,
+    #   ssc.implementation.end,
+    #   changepoint.prior.list = changepoint.prior.gradient.change.list,
+    #   changepoint.model.func = changepoint.model.func,
+    #   adapt = mcp.args$adapt,
+    #   iter = mcp.args$iter,
+    #   cores = mcp.args$cores
+    # ), 
+    # 
+    # changepoint.model.null.list = generate.changepoint.model.list(
+    #   time.series.figure.dt,
+    #   changepoint.measure.list,
+    #   ssc.implementation.start,
+    #   ssc.implementation.end,
+    #   changepoint.prior.list = NULL,
+    #   changepoint.model.func = changepoint.model.null.func,
+    #   adapt = mcp.args$adapt,
+    #   iter = mcp.args$iter,
+    #   cores = mcp.args$cores
+    # ), 
     
-    changepoint.model.null.list = generate.changepoint.model.list(
-      time.series.figure.dt,
-      changepoint.measure.list,
-      ssc.implementation.start,
-      ssc.implementation.end,
-      changepoint.prior.list = NULL,
-      changepoint.model.func = changepoint.model.null.func,
-      adapt = mcp.args$adapt,
+    mcp.daoh.modeling.dt = time.series.figure.dt[, .(
+      date = daoh.period.start,
+      date.numeric = as.numeric(daoh.period.start),
+      daoh = daoh,
+      mort.90.day = mort.90.day,
+      mort.30.day = mort.30.day
+    )],
+    
+    mcp.mort.modeling.dt = time.series.figure.dt[, .(
+      daoh = mean(daoh),
+      mort.90.day = sum(mort.90.day),
+      mort.30.day = sum(mort.30.day),
+      N = .N
+    ), by = .(date = floor_date(daoh.period.start, unit = '1 day'),
+              date.numeric = as.numeric(floor_date(daoh.period.start, unit = '1 day')))], 
+    
+    daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(daoh ~ 1 + date.numeric,
+                   ~ 0 + date.numeric,
+                   ~ 0 + date.numeric),
+      data = mcp.daoh.modeling.dt,
+      prior = changepoint.prior.dnorm.daoh,
+      sample = "both",
       iter = mcp.args$iter,
-      cores = mcp.args$cores
-    ), 
+      adapt = mcp.args$cores,
+      cores = 1
+    ),
+    
+    mort.90.day.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(mort.90.day | trials(N) ~ 1 + date.numeric,
+                   ~ 0 + date.numeric,
+                   ~ 0 + date.numeric),
+      data = mcp.mort.modeling.dt,
+      prior = changepoint.prior.dnorm.mortality,
+      sample = "both",
+      iter = mcp.args$iter,
+      adapt = mcp.args$adapt,
+      cores = mcp.args$cores,
+      family = binomial(link = "logit")
+    ),
     
     # Graphs of plots in changepoint model lists
     # changepoint.plot = draw.changepoint.plot(changepoint.model.list,
@@ -1199,9 +1311,27 @@ checkwho_plan =
     #   )
     # ),
     # 
-    publication.table.rev.comprehensive.daoh.summary = generate.publication.table(
+    publication.table.rev3.comprehensive.daoh.summary = generate.publication.table(
       name = 'daohTab',
       input.table = pre.post.daoh.statistics.ht,
+      caption = paste0(
+        "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
+        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
+      )
+    ),
+    
+    publication.table.rev3.comprehensive.ethnicity.daoh.summary = generate.publication.table(
+      name = 'daohEthnicityTab',
+      input.table = ethnicity.daoh.statistics.ht,
+      caption = paste0(
+        "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
+        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
+      )
+    ),
+    
+    publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary = generate.publication.table(
+      name = 'daohMaoriEthnicityTab',
+      input.table = maori.ethnicity.daoh.statistics.ht,
       caption = paste0(
         "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
         "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."

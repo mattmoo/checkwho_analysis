@@ -24,6 +24,7 @@ required.cran.packages = list(
   "scico",
   "forcats",
   "RColorBrewer",
+  "colorspace",
   
   "Hmisc",
   "stringr",

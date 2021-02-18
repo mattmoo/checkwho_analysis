@@ -140,7 +140,9 @@ generate.regression.dt <- function(daoh.dt,
   )]
   
   # Maori ethnicity was a registered endpoint
-  regression.dt[, maori.ethnicity := factor(ethnicity == 'Maori')]
+  regression.dt[ethnicity != 'Maori', maori.ethnicity := 'Non-Maori']
+  regression.dt[ethnicity == 'Maori', maori.ethnicity := 'Maori']
+  regression.dt[, maori.ethnicity := factor(maori.ethnicity, levels = c('Maori', 'Non-Maori'))]
   
   # # Attach gender
   # regression.dt = merge(x = regression.dt,

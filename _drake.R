@@ -14,27 +14,32 @@ drake_config(checkwho_plan,
 rev3.targets = c(
   'report.output.dir',
   'pre.post.svy.des',
+  'time.series.raw.svy.des',
+  'ethnicity.svy.des',
   'pre.post.raw.svy.des',
   'daoh.mortality.plot',
   'daoh.mortality.notransform.plot',
   'daoh.pre.post.raw.plot',
   'daoh.pre.post.risk.adj.plot',
   'daoh.combined.pre.post.summary.dt',
-  'risk.adjustment.plot.animation',
-  'dra.riskgp.plot',
-  'dra.riskgp.group.diff.plot',
-  'dra.riskgp.daoh.animation',
-  'pre.post.daoh.statistics.list',
-  'pre.post.daoh.statistics.ht',
+  # 'risk.adjustment.plot.animation',
+  'SSC.dra.riskgp.plot',
+  'SSC.dra.riskgp.group.diff.plot',
+  'ethnicity.dra.riskgp.group.diff.plot',
+  # 'SSC.dra.riskgp.daoh.animation',
   'publication.table.demographics',
-  'publication.table.rev.comprehensive.daoh.summary'
+  'publication.table.rev3.comprehensive.daoh.summary',
+  'publication.table.rev3.comprehensive.ethnicity.daoh.summary',
+  'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary',
+  'daoh.intervention.changepoint.mcp.fit',
+  'mort.90.day.intervention.changepoint.mcp.fit'
   
 )
-# make(checkwho_plan, 'pre.post.daoh.statistics.list')
+# make(checkwho_plan, 'risk.adjusted.regression.dt')
 # p = vis_drake_graph(checkwho_plan)
 make(checkwho_plan, rev3.targets)
 # make(checkwho_plan, 'pre.post.svy.des')
-loadd(rev3.targets)
+# loadd(rev3.targets)
 asassasa
 
 animate(

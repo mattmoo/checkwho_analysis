@@ -32,8 +32,10 @@ generate.time.series.figure.dt <- function(risk.adjusted.regression.dt,
                                                      LOS,
                                                      mort.30.day,
                                                      mort.90.day,
+                                                     ethnicity.dra.weight,
+                                                     ethnicity.riskgp,
                                                      SSC.dra.weight,
-                                                     riskgp
+                                                     SSC.riskgp
                                                    )]
   
   time.series.figure.dt[, SSC := 'Implementation']

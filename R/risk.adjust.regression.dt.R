@@ -12,7 +12,8 @@ risk.adjust.regression.dt <- function(input.dt,
                                       daoh.risk.adjust.model,
                                       mort.90.risk.adjust.model,
                                       mort.30.risk.adjust.model,
-                                      dra.risk.adjust.model.list) {
+                                      SSC.dra.risk.adjust.model.list,
+                                      ethnicity.dra.risk.adjust.model.list) {
 
   risk.adjusted.input.dt = copy(input.dt)
   
@@ -39,12 +40,28 @@ risk.adjust.regression.dt <- function(input.dt,
   
   # Add weights for risk adjusting DAOH with direct risk adjustment.
   generate.dra.riskgp.columns(risk.adjusted.input.dt,
-                              model.list = dra.risk.adjust.model.list)
+                              model.list = SSC.dra.risk.adjust.model.list,
+                              col.prefix.name = 'SSC.')
   
+  risk.adjusted.input.dt = calculate.dra.weights(
+    input.dt = risk.adjusted.input.dt,
+    reference.level = NULL,
+    group.col.name = 'SSC',
+    weight.col.name = 'SSC.dra.weight',
+    riskgp.col.name = 'SSC.riskgp'
+  )
   
-  risk.adjusted.input.dt = calculate.dra.weights(input.dt = risk.adjusted.input.dt,
-                                                            group.col.name = 'SSC',
-                                                            weight.col.name = 'SSC.dra.weight')
+  generate.dra.riskgp.columns(risk.adjusted.input.dt,
+                              model.list = ethnicity.dra.risk.adjust.model.list,
+                              col.prefix.name = 'ethnicity.')
+  
+  risk.adjusted.input.dt = calculate.dra.weights(
+    input.dt = risk.adjusted.input.dt,
+    group.col.name = 'ethnicity',
+    weight.col.name = 'ethnicity.dra.weight',
+    riskgp.col.name = 'ethnicity.riskgp',
+    reference.level = 'Maori'
+  )
   
   setorder(risk.adjusted.input.dt, index.event.id)
   
