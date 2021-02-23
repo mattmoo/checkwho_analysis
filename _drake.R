@@ -30,9 +30,9 @@ rev3.targets = c(
   'publication.table.demographics',
   'publication.table.rev3.comprehensive.daoh.summary',
   'publication.table.rev3.comprehensive.ethnicity.daoh.summary',
-  'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary',
-  'daoh.intervention.changepoint.mcp.fit',
-  'mort.90.day.intervention.changepoint.mcp.fit'
+  'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary'
+  # 'daoh.intervention.changepoint.mcp.fit',
+  # 'mort.90.day.intervention.changepoint.mcp.fit'
   
 )
 # make(checkwho_plan, 'risk.adjusted.regression.dt')

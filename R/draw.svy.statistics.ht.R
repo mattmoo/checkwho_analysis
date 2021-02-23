@@ -170,7 +170,7 @@ draw.svy.statistics.ht <-
         set_align(col = seq(2, 12, 2), value = 'right') %>%
         set_number_format(col = 14,
                           value = list(function(x)
-                            scales::pvalue(x, accuracy = 0.00001))) %>%
+                            scales::pvalue(x, accuracy = 0.0001))) %>%
         set_bottom_border(row = c(nrow(summary.dt.tab)), value = 1)
       
       # Put in a segment title if provided.
