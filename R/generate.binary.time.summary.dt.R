@@ -9,19 +9,20 @@
 ##'   axis.
 ##' @param measure.col.names Name of the binary measures to summarise. They must
 ##'   be logical.
-##' @param round.unit Time unit to round to, see lubridate::floor_date()
-##'   (Default: '1 month').
+##' @param round.unit Time unit to round to (or a vector of the same), see
+##'   lubridate::floor_date() (Default: '1 month').
 ##' @param ci.method Method by which to calculate confidence intervals, see
 ##'   DescTools::BinomCI() (Default: "clopper-pearson").
+##' @param conf.level Numeric confidence limits for confidence intervals (Default: 0.95)
 ##' @return Data.table with measure.col.names summarised in long format by
 ##'   requested time. Includes proportion, lwr.ci, and upr.ci.
 generate.binary.time.summary.dt <- function(data.dt, 
                                             time.col.name,
                                             measure.col.names, 
                                             round.unit = "1 month", 
-                                            ci.method = "clopper-pearson") {
+                                            ci.method = "clopper-pearson",
+                                            conf.level = 0.95) {
 
-  
   # Check columns are logical
   for (measure.col.name in measure.col.names) {
     if (class(data.dt[,get(measure.col.name)]) != 'logical') {
@@ -30,32 +31,48 @@ generate.binary.time.summary.dt <- function(data.dt,
     }
   }
   
-  # Get subset of input data
-  input.dt = data.dt[, 
-                     c(time.col.name, 
-                       measure.col.names),
-                     with = FALSE]
-  # Round down time.
-  input.dt[,
-           time := floor_date(daoh.period.start, 
-                              unit = round.unit)]
+  binary.time.summary.dt = data.table()
   
-  #Remove original time and transform data to long format table.
-  input.dt = melt(input.dt[,c('time', measure.col.names), with = FALSE],
-                  id.vars = "time",
-                  measure.vars = measure.col.names,
-                  variable.name = "measure")
+  for(round.unit.it in round.unit) {
+    
+    # Get subset of input data
+    input.dt = data.dt[, 
+                       c(time.col.name, 
+                         measure.col.names),
+                       with = FALSE]
+    
+    # Round down time.
+    input.dt[,
+             time := floor_date(daoh.period.start, 
+                                unit = round.unit.it)]
+    
+    #Remove original time and transform data to long format table.
+    input.dt = melt(input.dt[,c('time', measure.col.names), with = FALSE],
+                    id.vars = "time",
+                    measure.vars = measure.col.names,
+                    variable.name = "measure")
+    
+    
+    iteration.binary.time.summary.dt = input.dt[,
+                                                cbind(as.data.table(
+                                                  DescTools::BinomCI(
+                                                    x = .N * mean(value),
+                                                    n = .N,
+                                                    conf.level = conf.level,
+                                                    method = ci.method
+                                                  )
+                                                ),
+                                                data.table(x = round(.N * mean(value)),
+                                                           N = .N)), by = .(time, measure)]
+    
+    setnames(iteration.binary.time.summary.dt, old = 'est', new = 'proportion')
+    
+    iteration.binary.time.summary.dt[, round.unit := factor(round.unit.it)]
+    
+    binary.time.summary.dt = rbindlist(list(binary.time.summary.dt,
+                                            iteration.binary.time.summary.dt))
+  }
   
-  
-  binary.time.summary.dt = input.dt[,
-                                    as.data.table(DescTools::BinomCI(
-                                      x = .N * mean(value),
-                                      n = .N,
-                                      conf.level = 0.95,
-                                      method = ci.method
-                                    )), by = .(time, measure)]
-  
-  setnames(binary.time.summary.dt, old = 'est', new = 'proportion')
   
   return(binary.time.summary.dt)
 

@@ -208,7 +208,7 @@ generate.eligibility.dt <- function(event.opdate.dt,
                    overlapping.op.and.admission &
                    eligible.procedure &
                    # first.operation.adhb &
-                   has.asa & 
+                   # has.asa & 
                    not.asa.6 &
                    no.donor.operation]
   

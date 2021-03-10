@@ -55,7 +55,7 @@ required.cran.packages = list(
 )
 
 conflict_prefer("%like%", "data.table")
-conflict_prefer("View", "utils")
+# conflict_prefer("View", "utils")
 
 options(gtsummary.tbl_summary.percent_fun = function(x) style_number(x * 100, digits = 1))
 

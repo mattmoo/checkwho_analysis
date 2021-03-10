@@ -120,7 +120,10 @@ generate.regression.dt <- function(daoh.dt,
   
   # Group ASA 4 and 5
   regression.dt[asa.status %in% c('ASA 4', 'ASA 5'), asa.status := 'ASA 4-5']
+  regression.dt[is.na(asa.status), asa.status := 'Not known']
   regression.dt[, asa.status := factor(asa.status, ordered = FALSE)]
+  
+  regression.dt[is.na(asa.acuity), asa.acuity := 'Not acute (or unknown)']
   
   # Remove order from clinical severity
   regression.dt[, clinical.severity := factor(clinical.severity, ordered = FALSE)]

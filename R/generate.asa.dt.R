@@ -12,13 +12,13 @@ generate.asa.dt <- function(moh.op.dt) {
   )
   
   asa.status.levels = list(
+    # '9' = 'Unrecorded'
     '1' = 'ASA 1',
     '2' = 'ASA 2',
     '3' = 'ASA 3',
     '4' = 'ASA 4',
     '5' = 'ASA 5',
     '6' = 'ASA 6'
-    # '9' = 'Unrecorded'
   )
   
   # Pull out only anaesthetic procedures with ASA.

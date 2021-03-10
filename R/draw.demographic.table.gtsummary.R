@@ -25,7 +25,7 @@ draw.demographic.table.gtsummary <- function(pre.post.figure.dt,
     gender ~ 'Gender',
     age.group ~ 'Age',
     ethnicity ~ 'Ethnic group',
-    acuity ~ 'ASA Acuity',
+    acuity ~ 'Acuity',
     asa.status ~ 'ASA Physical Status',
     icd.chapter.grouped ~ 'Procedure type',
     clinical.severity ~ 'Clinical Severity'

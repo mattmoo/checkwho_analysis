@@ -18,12 +18,7 @@ diag.lookup.dt.filename = 'icd/csv_output/diagnosisMergeTableACHI8.csv'
 ethnicity.lookup.dt.filename = 'ethnicity/output/ethnicityMergeDT1-20190731.csv'
 
 n.iterations.for.perm.tests = 10000
-mcp.args = list(
-  iter = 80000,
-  adapt = 5000,
-  # cores = parallel::detectCores() - 1
-  cores = 1
-)
+
 
 
 checkwho_plan =
@@ -55,6 +50,20 @@ checkwho_plan =
     page.width.inches = 6.5,
     figure.dpi = 1200,
     image.output.format = 'png',
+    
+    mcp.args.mort = list(
+      iter = 30000,
+      adapt = 3000,
+      cores = 3
+      # cores = 1
+    ),
+    
+    mcp.args.daoh = list(
+      iter = 30000,
+      adapt = 3000,
+      cores = 3
+      # cores = 1
+    ),
       
     mortality.covariates = c(
       'age',
@@ -62,7 +71,7 @@ checkwho_plan =
       # 'age.group',
       # 'maori.ethnicity',
       'asa.status',
-      'asa.acuity',
+      'acuity',
       # 'CCI',
       'ethnicity',
       # 'acuity',
@@ -393,6 +402,25 @@ checkwho_plan =
                                hospitalisation.dt,
                                daoh.limits),
     
+    # Kind of experimental data.table with status on every follow-up day.
+    date.status.dt = generate.date.status.dt(
+      time.series.figure.dt,
+      daoh.limits,
+      moh.event.dt,
+      moh.patient.dt,
+      moh.op.dt,
+      flag.surgery = FALSE
+    ),
+    
+    date.status.with.surgery.dt = generate.date.status.dt(
+      time.series.figure.dt,
+      daoh.limits,
+      moh.event.dt,
+      moh.patient.dt,
+      moh.op.dt,
+      flag.surgery = TRUE
+    ),
+    
     monthly.summary.dt = generate.monthly.summary.dt(daoh.dt[time.series.eligible.and.unique == TRUE]),
     
     facility.type.summary.ht = draw.facility.type.summary.ht(
@@ -586,14 +614,42 @@ checkwho_plan =
       ssc.implementation.end
     ),
     
+    # x.time.scale = scale_x_date(
+    #   name = 'Year',
+    #   date_labels = '%Y',
+    #   date_breaks = '1 year',
+    #   date_minor_breaks = '3 months',
+    #   limits = NULL
+    # ),
+    
+    x.time.scale = scale_x_continuous(
+      labels = function(x)
+        format(as.Date(x, origin = "1970-01-01"), "%Y"),
+      breaks = seq.Date(
+        from = as.Date(floor_date(min.date, unit = 'years')),
+        to = as.Date(ceiling_date(max.date, unit = 'years')),
+        by = "1 year"
+      ),
+      minor_breaks = seq.Date(
+        from = as.Date(floor_date(min.date, unit = 'months')),
+        to = as.Date(ceiling_date(max.date, unit = 'months')),
+        by = "3 months"
+      ), 
+      name = element_blank()
+    ), 
+    
+    y.daoh.scale = scale_y_continuous(
+      breaks = seq(0,180)
+    ),
+    
     mortality.time.summary.dt = generate.binary.time.summary.dt(
       data.dt = time.series.figure.dt,
       time.col.name = 'daoh.period.start',
       measure.col.names = c('mort.30.day',
                             'mort.90.day'),
-      round.unit = '3 month',
+      round.unit = c('1 week', '1 month', '3 month', '1 year'),
       ci.method = "clopper-pearson"
-    ),
+    ), 
     
     mortality.time.plot = draw.binary.time.plot(
       mortality.time.summary.dt,
@@ -610,6 +666,13 @@ checkwho_plan =
       draw.ci = TRUE,
       draw.smooth.line = FALSE,
       period.rect.plot = period.rect.plot),
+    
+    daoh.time.summary.dt = generate.continuous.time.summary.dt(
+      data.dt = time.series.figure.dt,
+      time.col.name = 'daoh.period.start',
+      measure.col.names = 'daoh',
+      round.unit = c('1 week', '1 month', '3 month', '1 year')
+    ), 
 
     daoh.exceedance.time.summary.dt = generate.binary.time.summary.dt(
       data.dt = time.series.figure.dt,
@@ -625,9 +688,28 @@ checkwho_plan =
       round.unit = '3 month',
       ci.method = "clopper-pearson"),
     
+    smooth.daoh.summary.dt = generate.smooth.summary.dt(
+      data.dt = time.series.figure.dt,
+      time.col.name = 'daoh.period.start',
+      measure.col.names = c('daoh'),
+      smooth.duration = c('3 months', '6 months', '1 year'),
+      conf.level = 0.95
+      
+    ),
     
-    daoh.exceeds.75.gradient = (daoh.exceedance.time.summary.dt[time == max(time) & measure == 'exceeds.daoh.75', proportion] - 
-                          daoh.exceedance.time.summary.dt[time == min(time) &  measure == 'exceeds.daoh.75', proportion]) / 
+    smooth.mortality.summary.dt = generate.smooth.summary.dt(
+      data.dt = time.series.figure.dt,
+      time.col.name = 'daoh.period.start',
+      measure.col.names = c('mort.90.day', 'mort.30.day'),
+      smooth.duration = c('3 months', '6 months', '1 year'),
+      conf.level = 0.95
+      
+    ),
+    
+    daoh.exceeds.75.gradient = (daoh.exceedance.time.summary.dt[time == max(time) &
+                                                                  measure == 'exceeds.daoh.75', proportion] -
+                                  daoh.exceedance.time.summary.dt[time == min(time) &
+                                                                    measure == 'exceeds.daoh.75', proportion]) /
       daoh.exceedance.time.summary.dt[, as.numeric(max(time)) - as.numeric(min(time))],
     
     
@@ -684,6 +766,22 @@ checkwho_plan =
       measure.col.names = 'daoh',
       probs = c(0.1, 0.25, 0.5, 0.75),
       round.unit = '3 month'
+    ),
+    
+    daoh.daily.follow.up.date.dt = generate.daoh.follow.up.date.dt(
+      date.status.dt,
+      period.rect.plot,
+      x.time.scale,
+      cull.days = daoh.limits[2] - daoh.limits[1] + 1,
+      round.period = '1 day'
+    ),
+    
+    daoh.weekly.follow.up.date.dt = generate.daoh.follow.up.date.dt(
+      date.status.dt,
+      period.rect.plot,
+      x.time.scale,
+      cull.days = daoh.limits[2] - daoh.limits[1] + 1,
+      round.period = '1 week'
     ),
     
     daoh.time.plot = draw.quantile.time.plot(
@@ -1150,51 +1248,164 @@ checkwho_plan =
     #   cores = mcp.args$cores
     # ), 
     
-    mcp.daoh.modeling.dt = time.series.figure.dt[, .(
-      date = daoh.period.start,
-      date.numeric = as.numeric(daoh.period.start),
-      daoh = daoh,
-      mort.90.day = mort.90.day,
-      mort.30.day = mort.30.day
-    )],
+    # mcp.daoh.modeling.dt = time.series.figure.dt[, .(
+    #   date = daoh.period.start,
+    #   date.numeric = as.numeric(daoh.period.start),
+    #   daoh = daoh,
+    #   mort.90.day = mort.90.day,
+    #   mort.30.day = mort.30.day
+    # )],
+    # 
+    # mcp.mort.modeling.dt = time.series.figure.dt[, .(
+    #   daoh = mean(daoh),
+    #   mort.90.day = sum(mort.90.day),
+    #   mort.30.day = sum(mort.30.day),
+    #   N = .N
+    # ), by = .(date = floor_date(daoh.period.start, unit = '1 day'),
+    #           date.numeric = as.numeric(floor_date(daoh.period.start, unit = '1 day')))], 
+    # 
     
-    mcp.mort.modeling.dt = time.series.figure.dt[, .(
-      daoh = mean(daoh),
-      mort.90.day = sum(mort.90.day),
-      mort.30.day = sum(mort.30.day),
-      N = .N
-    ), by = .(date = floor_date(daoh.period.start, unit = '1 day'),
-              date.numeric = as.numeric(floor_date(daoh.period.start, unit = '1 day')))], 
+    # weekly.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+    #   model = list(daoh ~ 1 + date.numeric,
+    #                ~ 0 + date.numeric,
+    #                ~ 0 + date.numeric),
+    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
+    #   prior = changepoint.prior.dnorm.daoh,
+    #   sample = "both",
+    #   iter = mcp.args.daoh$iter,
+    #   adapt = mcp.args.daoh$adapt,
+    #   cores = mcp.args.mort$cores
+    # ), 
+    # 
+    # weekly.daoh.mcp.fit = mcp::mcp(
+    #   model = list(daoh ~ 1 + date.numeric),
+    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
+    #   sample = "both",
+    #   iter = mcp.args.daoh$iter,
+    #   adapt = mcp.args.daoh$adapt,
+    #   cores = mcp.args.mort$cores
+    # ), 
     
-    daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(daoh ~ 1 + date.numeric,
-                   ~ 0 + date.numeric,
-                   ~ 0 + date.numeric),
-      data = mcp.daoh.modeling.dt,
-      prior = changepoint.prior.dnorm.daoh,
+    # weekly.smooth.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+    #   model = list(daoh ~ 1 + date.numeric,
+    #                ~ 0 + date.numeric,
+    #                ~ 0 + date.numeric),
+    #   data = smooth.daoh.summary.dt[smooth.duration == '1 year', .(date.numeric = as.numeric(time), daoh = fit)],
+    #   sample = "both",
+    #   iter = mcp.args.daoh$iter,
+    #   adapt = mcp.args.daoh$adapt,
+    #   cores = mcp.args.mort$cores
+    # ), 
+    
+    
+    daoh.daily.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
+                   ~ 0 + ar(1) + date.numeric,
+                   ~ 0 + ar(1) + date.numeric),
+      data = daoh.daily.follow.up.date.dt,
       sample = "both",
-      iter = mcp.args$iter,
-      adapt = mcp.args$cores,
-      cores = 1
+      prior = changepoint.prior.dnorm.mortality,
+      iter = mcp.args.daoh$iter,
+      adapt = mcp.args.daoh$adapt,
+      cores = mcp.args.mort$cores,
+      family = binomial()
     ),
     
-    mort.90.day.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(mort.90.day | trials(N) ~ 1 + date.numeric,
+    daoh.daily.follow.up.mcp.fit = mcp::mcp(
+      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
+      data = daoh.daily.follow.up.date.dt,
+      sample = "both",
+      # prior = changepoint.prior.dnorm.mortality,
+      iter = mcp.args.daoh$iter,
+      adapt = mcp.args.daoh$adapt,
+      cores = mcp.args.mort$cores,
+      family = binomial()
+    ),
+    
+    daoh.weekly.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
+                   ~ 0 + ar(1) + date.numeric,
+                   ~ 0 + ar(1) + date.numeric),
+      data = daoh.weekly.follow.up.date.dt,
+      sample = "both",
+      prior = changepoint.prior.dnorm.mortality,
+      iter = mcp.args.daoh$iter,
+      adapt = mcp.args.daoh$adapt,
+      cores = mcp.args.mort$cores,
+      family = binomial()
+    ),
+    
+    daoh.weekly.follow.up.mcp.fit = mcp::mcp(
+      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
+      data = daoh.weekly.follow.up.date.dt,
+      sample = "both",
+      # prior = changepoint.prior.dnorm.mortality,
+      iter = mcp.args.daoh$iter,
+      adapt = mcp.args.daoh$adapt,
+      cores = mcp.args.mort$cores,
+      family = binomial()
+    ),
+    
+    
+    weekly.mort.90.day.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(x | trials(N) ~ 1 + date.numeric,
                    ~ 0 + date.numeric,
                    ~ 0 + date.numeric),
-      data = mcp.mort.modeling.dt,
+      data = mortality.time.summary.dt[measure == 'mort.90.day' & round.unit == '1 week', .(date.numeric = as.numeric(time), x = x, N = N)],
       prior = changepoint.prior.dnorm.mortality,
       sample = "both",
-      iter = mcp.args$iter,
-      adapt = mcp.args$adapt,
-      cores = mcp.args$cores,
+      iter = mcp.args.mort$iter,
+      adapt = mcp.args.mort$adapt,
+      cores = mcp.args.mort$cores,
       family = binomial(link = "logit")
     ),
     
-    # Graphs of plots in changepoint model lists
-    # changepoint.plot = draw.changepoint.plot(changepoint.model.list,
-    #                                          names(changepoint.measure.list),
-    #                                          period.rect.plot),
+    weekly.mort.90.day.mcp.fit = mcp::mcp(
+      model = list(x | trials(N) ~ 1 + date.numeric),
+      data = mortality.time.summary.dt[measure == 'mort.90.day' & round.unit == '1 week', .(date.numeric = as.numeric(time), x = x, N = N)],
+      sample = "both",
+      iter = mcp.args.mort$iter,
+      adapt = mcp.args.mort$adapt,
+      cores = mcp.args.mort$cores,
+      family = binomial(link = "logit")
+    ),
+    
+    changepoint.plot.smoothing.duration = "1 year",
+    ribbon.transparency = 0.15,
+    ribbon.colour = grDevices::rgb(0, 0, 0, ribbon.transparency),
+    
+    mort.90.day.changepoint.plot = draw.changepoint.plot(
+      mcp.fit = weekly.mort.90.day.intervention.changepoint.mcp.fit,
+      smooth.summary.dt = smooth.mortality.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
+                                                        measure == 'mort.90.day'],
+      y.scale =
+        scale_y_continuous(
+          labels = scales::percent,
+          name = element_blank(),
+          limits = c(0, NA),
+          breaks = seq(0, 0.2, by = 0.01),
+          minor_breaks = seq(0, 0.2, by = 0.005)
+        ),
+      x.time.scale = x.time.scale,
+      period.rect.plot = period.rect.plot,
+      density.height = .025,
+      n.lines = 200,
+      rev.fill.scale = TRUE
+    ), 
+    
+    # daoh.changepoint.plot = draw.changepoint.plot(
+    #   mcp.fit = weekly.daoh.intervention.changepoint.mcp.fit,
+    #   smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration],
+    #   y.scale = scale_y_continuous(
+    #       name = 'DAOH',
+    #       limits = c(72, 81),
+    #       breaks = seq(0, 90, by = 1)
+    #     ),
+    #   x.time.scale = x.time.scale,
+    #   period.rect.plot = period.rect.plot,
+    #   density.height = 3,
+    #   n.lines = 200
+    # ), 
     
     changepoint.model.with.prior.dirichlet.plot = draw.changepoint.plot(
       changepoint.model.with.prior.dirichlet.list,

@@ -1,7 +1,7 @@
 ## Load your packages, e.g. library(drake).
 source("./packages.R")
 
-## Load your R files
+# Load your R files
 lapply(list.files("./R", full.names = TRUE), source)
 
 ## _drake.R must end with a call to drake_config().
@@ -30,14 +30,33 @@ rev3.targets = c(
   'publication.table.demographics',
   'publication.table.rev3.comprehensive.daoh.summary',
   'publication.table.rev3.comprehensive.ethnicity.daoh.summary',
-  'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary'
+  'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary',
+  # 'period.rect.plot',
+  # 'daoh.time.summary.dt',
+  # 'smooth.daoh.summary.dt',
+  # 'smooth.mortality.summary.dt',
+  # 'weekly.daoh.intervention.changepoint.mcp.fit',
+  # 'weekly.smooth.daoh.intervention.changepoint.mcp.fit',
+  'weekly.mort.90.day.intervention.changepoint.mcp.fit',
+  'weekly.mort.90.day.mcp.fit',
+  # 'weekly.daoh.mcp.fit',
+  # 'daoh.changepoint.plot',
+  'mort.90.day.changepoint.plot',
+  'date.status.dt',
+  'date.status.with.surgery.dt'
+  # 'daoh.weekly.follow.up.intervention.changepoint.mcp.fit',
+  # 'daoh.weekly.follow.up.mcp.fit'
+  # 'daoh.daily.follow.up.intervention.changepoint.mcp.fit',
+  # 'daoh.daily.follow.up.mcp.fit'
   # 'daoh.intervention.changepoint.mcp.fit',
   # 'mort.90.day.intervention.changepoint.mcp.fit'
   
 )
 # make(checkwho_plan, 'risk.adjusted.regression.dt')
 # p = vis_drake_graph(checkwho_plan)
+# make(checkwho_plan, 'publication.table.rev3.comprehensive.daoh.summary')
 make(checkwho_plan, rev3.targets)
+# make(checkwho_plan, c('date.status.dt', 'date.status.with.surgery.dt'))
 # make(checkwho_plan, 'pre.post.svy.des')
 # loadd(rev3.targets)
 asassasa
