@@ -17,7 +17,7 @@ op.lookup.dt.filename = 'icd/csv_output/opMergeTableACHI8.csv'
 diag.lookup.dt.filename = 'icd/csv_output/diagnosisMergeTableACHI8.csv'
 ethnicity.lookup.dt.filename = 'ethnicity/output/ethnicityMergeDT1-20190731.csv'
 
-n.iterations.for.perm.tests = 10000
+n.iterations.for.perm.tests = 12000
 
 
 
@@ -58,9 +58,16 @@ checkwho_plan =
       # cores = 1
     ),
     
-    mcp.args.daoh = list(
+    mcp.args.daoh.gaussian = list(
       iter = 30000,
       adapt = 3000,
+      cores = 3
+      # cores = 1
+    ),
+    
+    mcp.args.daoh.binomial = list(
+      iter = 10000,
+      adapt = 400,
       cores = 3
       # cores = 1
     ),
@@ -1265,27 +1272,93 @@ checkwho_plan =
     #           date.numeric = as.numeric(floor_date(daoh.period.start, unit = '1 day')))], 
     # 
     
-    # weekly.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-    #   model = list(daoh ~ 1 + date.numeric,
-    #                ~ 0 + date.numeric,
-    #                ~ 0 + date.numeric),
-    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
-    #   prior = changepoint.prior.dnorm.daoh,
-    #   sample = "both",
-    #   iter = mcp.args.daoh$iter,
-    #   adapt = mcp.args.daoh$adapt,
-    #   cores = mcp.args.mort$cores
-    # ), 
-    # 
-    # weekly.daoh.mcp.fit = mcp::mcp(
-    #   model = list(daoh ~ 1 + date.numeric),
-    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
-    #   sample = "both",
-    #   iter = mcp.args.daoh$iter,
-    #   adapt = mcp.args.daoh$adapt,
-    #   cores = mcp.args.mort$cores
-    # ), 
+    # Changepoint analysis on weekly mean DAOH.
+    weekly.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(daoh ~ 1 + date.numeric,
+                   ~ 0 + date.numeric,
+                   ~ 0 + date.numeric),
+      data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
+      prior = changepoint.prior.dnorm.daoh,
+      sample = "both",
+      iter = mcp.args.daoh.gaussian$iter,
+      adapt = mcp.args.daoh.gaussian$adapt,
+      cores = mcp.args.daoh.gaussian$cores
+    ),
+
+    weekly.daoh.mcp.fit = mcp::mcp(
+      model = list(daoh ~ 1 + date.numeric),
+      data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
+      sample = "both",
+      iter = mcp.args.daoh.gaussian$iter,
+      adapt = mcp.args.daoh.gaussian$adapt,
+      cores = mcp.args.daoh.gaussian$cores
+    ),
     
+    # Taking each patient's DAOH as a result from 90 trials.
+    binomial.daoh.mcp.dt = time.series.figure.dt[, .(
+      daoh = as.integer(daoh),
+      n.follow.up.days = daoh.limits[2] - daoh.limits[1] + 1,
+      date.numeric = as.integer(daoh.period.start)
+    )],
+    
+    binomial.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric,
+                   ~ 0 + date.numeric,
+                   ~ 0 + date.numeric),
+      data = binomial.daoh.mcp.dt,
+      sample = "both",
+      prior = changepoint.prior.dnorm.daoh,
+      adapt = mcp.args.daoh.binomial$adapt,
+      iter = mcp.args.daoh.binomial$iter,
+      cores = mcp.args.daoh.binomial$cores,
+      chains = mcp.args.daoh.binomial$cores,
+      family = binomial()
+    ),
+    
+    binomial.daoh.mcp.fit = mcp::mcp(
+      model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric),
+      data = binomial.daoh.mcp.dt,
+      sample = "both",
+      adapt = mcp.args.daoh.binomial$adapt,
+      iter = mcp.args.daoh.binomial$iter,
+      cores = mcp.args.daoh.binomial$cores,
+      chains = mcp.args.daoh.binomial$cores,
+      family = binomial()
+    ),
+    
+    # Taking each patient's mortality as a result from one trial.
+    binomial.mort.90.day.mcp.dt = time.series.figure.dt[, .(
+      mort.90.day = as.integer(mort.90.day),
+      n.follow.up = 1,
+      date.numeric = as.integer(daoh.period.start)
+    )],
+    
+    binomial.mort.90.day.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(
+        mort.90.day | trials(n.follow.up) ~ 1 + date.numeric,
+        ~ 0 + date.numeric,
+        ~ 0 + date.numeric
+      ),
+      data = binomial.mort.90.day.mcp.dt,
+      sample = "both",
+      prior = changepoint.prior.dnorm.mortality,
+      adapt = mcp.args.daoh.binomial$adapt,
+      iter = mcp.args.daoh.binomial$iter,
+      cores = mcp.args.daoh.binomial$cores,
+      chains = mcp.args.daoh.binomial$cores,
+      family = binomial()
+    ), 
+    
+    binomial.mort.90.day.mcp.fit = mcp::mcp(
+      model = list(mort.90.day | trials(n.follow.up) ~ 1 + date.numeric),
+      data = binomial.mort.90.day.mcp.dt,
+      sample = "both",
+      adapt = mcp.args.daoh.binomial$adapt,
+      iter = mcp.args.daoh.binomial$iter,
+      cores = mcp.args.daoh.binomial$cores,
+      chains = mcp.args.daoh.binomial$cores,
+      family = binomial()
+    ), 
     # weekly.smooth.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
     #   model = list(daoh ~ 1 + date.numeric,
     #                ~ 0 + date.numeric,
@@ -1298,54 +1371,53 @@ checkwho_plan =
     # ), 
     
     
-    daoh.daily.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
-                   ~ 0 + ar(1) + date.numeric,
-                   ~ 0 + ar(1) + date.numeric),
-      data = daoh.daily.follow.up.date.dt,
-      sample = "both",
-      prior = changepoint.prior.dnorm.mortality,
-      iter = mcp.args.daoh$iter,
-      adapt = mcp.args.daoh$adapt,
-      cores = mcp.args.mort$cores,
-      family = binomial()
-    ),
-    
-    daoh.daily.follow.up.mcp.fit = mcp::mcp(
-      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
-      data = daoh.daily.follow.up.date.dt,
-      sample = "both",
-      # prior = changepoint.prior.dnorm.mortality,
-      iter = mcp.args.daoh$iter,
-      adapt = mcp.args.daoh$adapt,
-      cores = mcp.args.mort$cores,
-      family = binomial()
-    ),
-    
-    daoh.weekly.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
-                   ~ 0 + ar(1) + date.numeric,
-                   ~ 0 + ar(1) + date.numeric),
-      data = daoh.weekly.follow.up.date.dt,
-      sample = "both",
-      prior = changepoint.prior.dnorm.mortality,
-      iter = mcp.args.daoh$iter,
-      adapt = mcp.args.daoh$adapt,
-      cores = mcp.args.mort$cores,
-      family = binomial()
-    ),
-    
-    daoh.weekly.follow.up.mcp.fit = mcp::mcp(
-      model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
-      data = daoh.weekly.follow.up.date.dt,
-      sample = "both",
-      # prior = changepoint.prior.dnorm.mortality,
-      iter = mcp.args.daoh$iter,
-      adapt = mcp.args.daoh$adapt,
-      cores = mcp.args.mort$cores,
-      family = binomial()
-    ),
-    
+    # daoh.daily.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
+    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
+    #                ~ 0 + ar(1) + date.numeric,
+    #                ~ 0 + ar(1) + date.numeric),
+    #   data = daoh.daily.follow.up.date.dt,
+    #   sample = "both",
+    #   prior = changepoint.prior.dnorm.mortality,
+    #   iter = mcp.args.daoh$iter,
+    #   adapt = mcp.args.daoh$adapt,
+    #   cores = mcp.args.mort$cores,
+    #   family = binomial()
+    # ),
+    # 
+    # daoh.daily.follow.up.mcp.fit = mcp::mcp(
+    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
+    #   data = daoh.daily.follow.up.date.dt,
+    #   sample = "both",
+    #   # prior = changepoint.prior.dnorm.mortality,
+    #   iter = mcp.args.daoh$iter,
+    #   adapt = mcp.args.daoh$adapt,
+    #   cores = mcp.args.mort$cores,
+    #   family = binomial()
+    # ),
+    # 
+    # daoh.weekly.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
+    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
+    #                ~ 0 + ar(1) + date.numeric,
+    #                ~ 0 + ar(1) + date.numeric),
+    #   data = daoh.weekly.follow.up.date.dt,
+    #   sample = "both",
+    #   prior = changepoint.prior.dnorm.mortality,
+    #   iter = mcp.args.daoh$iter,
+    #   adapt = mcp.args.daoh$adapt,
+    #   cores = mcp.args.mort$cores,
+    #   family = binomial()
+    # ),
+    # 
+    # daoh.weekly.follow.up.mcp.fit = mcp::mcp(
+    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
+    #   data = daoh.weekly.follow.up.date.dt,
+    #   sample = "both",
+    #   # prior = changepoint.prior.dnorm.mortality,
+    #   iter = mcp.args.daoh$iter,
+    #   adapt = mcp.args.daoh$adapt,
+    #   cores = mcp.args.mort$cores,
+    #   family = binomial()
+    # ),
     
     weekly.mort.90.day.intervention.changepoint.mcp.fit = mcp::mcp(
       model = list(x | trials(N) ~ 1 + date.numeric,

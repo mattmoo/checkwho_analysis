@@ -37,19 +37,23 @@ rev3.targets = c(
   # 'smooth.mortality.summary.dt',
   # 'weekly.daoh.intervention.changepoint.mcp.fit',
   # 'weekly.smooth.daoh.intervention.changepoint.mcp.fit',
-  'weekly.mort.90.day.intervention.changepoint.mcp.fit',
-  'weekly.mort.90.day.mcp.fit',
+  # 'weekly.mort.90.day.intervention.changepoint.mcp.fit',
+  # 'weekly.mort.90.day.mcp.fit',
   # 'weekly.daoh.mcp.fit',
   # 'daoh.changepoint.plot',
-  'mort.90.day.changepoint.plot',
-  'date.status.dt',
-  'date.status.with.surgery.dt'
+  # 'mort.90.day.changepoint.plot',
+  # 'date.status.dt',
+  # 'date.status.with.surgery.dt',
   # 'daoh.weekly.follow.up.intervention.changepoint.mcp.fit',
   # 'daoh.weekly.follow.up.mcp.fit'
   # 'daoh.daily.follow.up.intervention.changepoint.mcp.fit',
   # 'daoh.daily.follow.up.mcp.fit'
   # 'daoh.intervention.changepoint.mcp.fit',
   # 'mort.90.day.intervention.changepoint.mcp.fit'
+  'binomial.daoh.intervention.changepoint.mcp.fit',
+  'binomial.daoh.mcp.fit',
+  'binomial.mort.90.day.intervention.changepoint.mcp.fit',
+  'binomial.mort.90.day.mcp.fit'
   
 )
 # make(checkwho_plan, 'risk.adjusted.regression.dt')
