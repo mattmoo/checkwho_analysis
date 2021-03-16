@@ -850,7 +850,7 @@ checkwho_plan =
       'ASA2 (vs ASA1)' = 'asa.statusASA 2',
       'ASA3 (vs ASA1)' = 'asa.statusASA 3',
       'ASA4-5 (vs ASA1)' = 'asa.statusASA 4-5',
-      # "M\u101ori (vs non-M\u101ori)" = 'maori.ethnicityTRUE',
+      # "M\u101ori (vs non-M\u101ori)" = 'maori.ethnicityNon-Maori',
       "European (vs M\u101ori)" = 'ethnicityEuropean',
       "Asian (vs M\u101ori)" = 'ethnicityAsian',
       "Pacific Peoples (vs M\u101ori)" = 'ethnicityPacific Peoples',
@@ -893,7 +893,7 @@ checkwho_plan =
     group.coefficients.list = list(
       group.1 = c('SSCPost',
                   'genderFemale',
-                  # 'maori.ethnicityTRUE',
+                  # 'maori.ethnicityNon-Maori',
                   'ethnicityEuropean',
                   'ethnicityAsian',
                   'ethnicityPacific Peoples',
@@ -1553,7 +1553,7 @@ checkwho_plan =
         "eligible.procedure",
         "overlapping.op.and.admission",
         # "first.operation.adhb",
-        "has.asa",
+        # "has.asa",
         "alive.on.op.date",
         "not.asa.6",
         "no.donor.operation",
@@ -1575,9 +1575,30 @@ checkwho_plan =
       name = 'rawPlot',
       input.plot = daoh.mortality.plot,
       caption = paste0(
-        "Distribution of DAOH\u2089\u2080 for Extended Period (light grey). ",
-        "Overlaid in dark grey is the distribution for operations where the patient died during the subsequent 90 days, with or without having spent at least some days alive and out of hospital. ",
-        "Note the square root transform on y-axis."
+        "DAOH\u2089\u2080 recorded for ",
+        time.series.figure.dt[,.N], 
+        " patients who had operations in Auckland City Hospital, July 2004 to December 2013 (light grey), of whom ",
+        time.series.figure.dt[mort.90.day == TRUE,.N],
+        " died (",
+        100 * mean(time.series.figure.dt[,mort.90.day]),
+        "%) before 90 postoperative days (dark grey). ",
+        "Note square root transform on y-axis, untransformed data are presented in FIG_rawNoTransPlot_REF."
+      ),
+      aspect.ratio = 1.5
+    ),
+    
+    publication.figure.daoh.with.mort.notrans = generate.publication.figure(
+      name = 'rawNoTransPlot',
+      input.plot = daoh.mortality.notransform.plot,
+      caption = paste0(
+        "DAOH\u2089\u2080 recorded for ",
+        time.series.figure.dt[,.N], 
+        " patients who had operations in Auckland City Hospital, July 2004 to December 2013 (light grey), of whom ",
+        time.series.figure.dt[mort.90.day == TRUE,.N],
+        " died (",
+        100 * mean(time.series.figure.dt[,mort.90.day]),
+        "%) before 90 postoperative days (dark grey). ",
+        "Note square root transform on y-axis."
       ),
       aspect.ratio = 1.5
     ),
@@ -1623,7 +1644,7 @@ checkwho_plan =
     
     publication.figure.daoh.risk.adj = generate.publication.figure(
       name = 'daohGroupPlotRiskAdj',
-      input.plot = daoh.risk.adj.pre.post.plot,
+      input.plot = daoh.pre.post.risk.adj.plot,
       caption = paste0(
         "Distribution of risk-adjusted DAOH\u2089\u2080 for Pre-SSC and Post-SSC periods. ",
         "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
@@ -1770,59 +1791,32 @@ checkwho_plan =
     ),
     
     publication.results.daoh = list(
-      pre.post.riskadj.comparison.w = wilcox.test(daoh.risk.adj ~ SSC, data = pre.post.figure.dt)$statistic,
-      pre.post.riskadj.comparison.p = as.numeric(comprehensive.daoh.summary.ht[11,6]),
+      # pre.post.riskadj.comparison.w = wilcox.test(daoh.risk.adj ~ SSC, data = pre.post.figure.dt)$statistic,
+      # pre.post.riskadj.comparison.p = as.numeric(comprehensive.daoh.summary.ht[11,6]),
       
-      pre.post.perm.10.diff = as.numeric(comprehensive.daoh.summary.ht[15,5]),
-      pre.post.perm.10.p = as.numeric(comprehensive.daoh.summary.ht[15,6]),
-      pre.post.perm.25.diff = as.numeric(comprehensive.daoh.summary.ht[16,5]),
-      pre.post.perm.25.p = as.numeric(comprehensive.daoh.summary.ht[16,6]),
-      pre.post.perm.50.diff = as.numeric(comprehensive.daoh.summary.ht[17,5]),
-      pre.post.perm.50.p = as.numeric(comprehensive.daoh.summary.ht[17,6]),
-      pre.post.perm.75.diff = as.numeric(comprehensive.daoh.summary.ht[18,5]),
-      pre.post.perm.75.p = as.numeric(comprehensive.daoh.summary.ht[18,6]),
-      pre.post.perm.90.diff = as.numeric(comprehensive.daoh.summary.ht[19,5]),
-      pre.post.perm.90.p = as.numeric(comprehensive.daoh.summary.ht[19,6]),
+      daoh.mean.time.series = mean(time.series.figure.dt[,daoh]),
+      daoh.sd.time.series = sd(time.series.figure.dt[,daoh]),
+      daoh.median.time.series = median(time.series.figure.dt[,daoh]),
+      daoh.iqr.time.series = quantile(time.series.figure.dt[,daoh], probs = c(0.25, 0.75)),
       
-      final.daoh.covariates = final.daoh.covariates,
-      interactions.dt = daoh.interaction.test.dt[pvalue.fdr < 0.05, interaction.term],
+      daoh.n.zero.time.series = time.series.figure.dt[daoh == 0, .N],
+      daoh.prop.zero.time.series = time.series.figure.dt[daoh == 0, .N]/time.series.figure.dt[, .N],
+      daoh.zero.lived.prop.time.series = time.series.figure.dt[daoh == 0,.SD[mort.90.day == FALSE, .N]/.N],
+      daoh.zero.died.prop.time.series = time.series.figure.dt[daoh == 0,.SD[mort.90.day == TRUE, .N]/.N],
       
-      pre.post.qr.10.diff = summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Value"],
-      pre.post.qr.10.low = summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Value"] -
-        1.96 * summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.10.high = summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Value"] +
-        1.96 * summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.10.p = summary(daoh.regression.models[[1]])$coefficients["SSCPost", "Pr(>|t|)"],
-      
-      pre.post.qr.25.diff = summary(daoh.regression.models[[2]])$coefficients["SSCPost", "Value"],
-      pre.post.qr.25.low = summary(daoh.regression.models[[2]])$coefficients["SSCPost", "Value"] -
-        1.96 * summary(daoh.regression.models[[2]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.25.high = summary(daoh.regression.models[[2]])$coefficients["SSCPost", "Value"] +
-        1.96 * summary(daoh.regression.models[[2]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.25.p = summary(daoh.regression.models[[2]])$coefficients["SSCPost", "Pr(>|t|)"],
-      
-      pre.post.qr.50.diff = summary(daoh.regression.models[[3]])$coefficients["SSCPost", "Value"],
-      pre.post.qr.50.low = summary(daoh.regression.models[[3]])$coefficients["SSCPost", "Value"] -
-        1.96 * summary(daoh.regression.models[[3]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.50.high = summary(daoh.regression.models[[3]])$coefficients["SSCPost", "Value"] +
-        1.96 * summary(daoh.regression.models[[3]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.50.p = summary(daoh.regression.models[[3]])$coefficients["SSCPost", "Pr(>|t|)"],
-      
-      pre.post.qr.75.diff = summary(daoh.regression.models[[4]])$coefficients["SSCPost", "Value"],
-      pre.post.qr.75.low = summary(daoh.regression.models[[4]])$coefficients["SSCPost", "Value"] -
-        1.96 * summary(daoh.regression.models[[4]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.75.high = summary(daoh.regression.models[[4]])$coefficients["SSCPost", "Value"] +
-        1.96 * summary(daoh.regression.models[[4]])$coefficients["SSCPost", "Std. Error"],
-      pre.post.qr.75.p = summary(daoh.regression.models[[4]])$coefficients["SSCPost", "Pr(>|t|)"]
-      
+      daoh.stats.pre.post = pre.post.daoh.statistics.list
     ),
     
     publication.results.mortality = list(
-      mort.90.day.pre = pre.post.figure.dt[SSC == 'Pre',.SD[,.N,by = mort.90.day][mort.90.day==TRUE,N]/.N][1],
-      mort.90.day.post = pre.post.figure.dt[SSC == 'Post',.SD[,.N,by = mort.90.day][mort.90.day==TRUE,N]/.N][1],
+      mort.90.day.pre = binconf(pre.post.figure.dt[SSC == 'Pre' & mort.90.day == TRUE, .N], 
+                                pre.post.figure.dt[SSC == 'Pre', .N]),
+      mort.90.day.post = binconf(pre.post.figure.dt[SSC == 'Post' & mort.90.day == TRUE, .N], 
+                                 pre.post.figure.dt[SSC == 'Post', .N]),                                
       
-      mort.30.day.pre = pre.post.figure.dt[SSC == 'Pre',.SD[,.N,by = mort.30.day][mort.30.day==TRUE,N]/.N][1],
-      mort.30.day.post = pre.post.figure.dt[SSC == 'Post',.SD[,.N,by = mort.30.day][mort.30.day==TRUE,N]/.N][1],
+      mort.30.day.pre = binconf(pre.post.figure.dt[SSC == 'Pre' & mort.30.day == TRUE, .N], 
+                                pre.post.figure.dt[SSC == 'Pre', .N]),
+      mort.30.day.post = binconf(pre.post.figure.dt[SSC == 'Post' & mort.30.day == TRUE, .N], 
+                                 pre.post.figure.dt[SSC == 'Post', .N]), 
 
       mort.90.day.pre.n = pre.post.figure.dt[SSC == 'Pre' & mort.90.day==TRUE,.N],
       mort.90.day.post.n = pre.post.figure.dt[SSC == 'Post' & mort.90.day==TRUE,.N],
@@ -1830,8 +1824,10 @@ checkwho_plan =
       mort.30.day.pre.n = pre.post.figure.dt[SSC == 'Pre' & mort.30.day==TRUE,.N],
       mort.30.day.post.n = pre.post.figure.dt[SSC == 'Post' & mort.30.day==TRUE,.N],
       
-      mort.90.day.overall = time.series.figure.dt[,.SD[,.N,by = mort.90.day][mort.90.day==TRUE,N]/.N],
-      mort.30.day.overall = time.series.figure.dt[,.SD[,.N,by = mort.30.day][mort.30.day==TRUE,N]/.N],
+      mort.90.day.overall = binconf(time.series.figure.dt[mort.90.day == TRUE, .N], 
+                                    time.series.figure.dt[, .N]),
+      mort.30.day.overall = binconf(time.series.figure.dt[mort.30.day == TRUE, .N], 
+                                    time.series.figure.dt[, .N]),
       
       mort.90.day.overall.n = time.series.figure.dt[mort.90.day==TRUE,.N],
       mort.30.day.overall.n = time.series.figure.dt[mort.30.day==TRUE,.N],
@@ -1866,70 +1862,39 @@ checkwho_plan =
       ),
     
     publication.results.maori = list(
-      maori.mort.30.day = time.series.figure.dt[maori.ethnicity == TRUE,
-                                                binom.test(x = .SD[, .N, by = mort.30.day][mort.30.day == TRUE, N], 
-                                                           n = .N)][c('estimate', 'conf.int')], 
-      maori.mort.90.day = time.series.figure.dt[maori.ethnicity == TRUE,
-                                                binom.test(x = .SD[, .N, by = mort.90.day][mort.90.day == TRUE, N], 
-                                                           n = .N)][c('estimate', 'conf.int')], 
-      nonmaori.mort.30.day = time.series.figure.dt[maori.ethnicity == FALSE,
-                                                   binom.test(x = .SD[, .N, by = mort.30.day][mort.30.day == TRUE, N], 
-                                                              n = .N)][c('estimate', 'conf.int')], 
-      nonmaori.mort.90.day = time.series.figure.dt[maori.ethnicity == FALSE,
-                                                   binom.test(x = .SD[, .N, by = mort.90.day][mort.90.day == TRUE, N], 
-                                                              n = .N)][c('estimate', 'conf.int')],
+      maori.mort.30.day = binconf(time.series.figure.dt[maori.ethnicity == 'Maori' & mort.30.day == TRUE, .N], 
+                                  time.series.figure.dt[maori.ethnicity == 'Maori', .N]), 
+      maori.mort.90.day = binconf(time.series.figure.dt[maori.ethnicity == 'Maori' & mort.90.day == TRUE, .N], 
+                                 time.series.figure.dt[maori.ethnicity == 'Maori', .N]),  
+      nonmaori.mort.30.day = binconf(time.series.figure.dt[maori.ethnicity == 'Non-Maori' & mort.30.day == TRUE, .N], 
+                                     time.series.figure.dt[maori.ethnicity == 'Non-Maori', .N]),  
+      nonmaori.mort.90.day = binconf(time.series.figure.dt[maori.ethnicity == 'Non-Maori' & mort.90.day == TRUE, .N], 
+                                     time.series.figure.dt[maori.ethnicity == 'Non-Maori', .N]), 
       
+      maori.stats = maori.ethnicity.daoh.statistics.list,
       
-      maori.qr.10.diff = summary(daoh.maori.regression.models[[1]])$coefficients["maori.ethnicityTRUE", "Value"],
-      maori.qr.10.low = summary(daoh.maori.regression.models[[1]])$coefficients["maori.ethnicityTRUE", "Value"] -
-        1.96 * summary(daoh.maori.regression.models[[1]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.10.high = summary(daoh.maori.regression.models[[1]])$coefficients["maori.ethnicityTRUE", "Value"] +
-        1.96 * summary(daoh.maori.regression.models[[1]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.10.p = summary(daoh.maori.regression.models[[1]])$coefficients["maori.ethnicityTRUE", "Pr(>|t|)"],
-      
-      maori.qr.25.diff = summary(daoh.maori.regression.models[[2]])$coefficients["maori.ethnicityTRUE", "Value"],
-      maori.qr.25.low = summary(daoh.maori.regression.models[[2]])$coefficients["maori.ethnicityTRUE", "Value"] -
-        1.96 * summary(daoh.maori.regression.models[[2]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.25.high = summary(daoh.maori.regression.models[[2]])$coefficients["maori.ethnicityTRUE", "Value"] +
-        1.96 * summary(daoh.maori.regression.models[[2]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.25.p = summary(daoh.maori.regression.models[[2]])$coefficients["maori.ethnicityTRUE", "Pr(>|t|)"],
-      
-      maori.qr.50.diff = summary(daoh.maori.regression.models[[3]])$coefficients["maori.ethnicityTRUE", "Value"],
-      maori.qr.50.low = summary(daoh.maori.regression.models[[3]])$coefficients["maori.ethnicityTRUE", "Value"] -
-        1.96 * summary(daoh.maori.regression.models[[3]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.50.high = summary(daoh.maori.regression.models[[3]])$coefficients["maori.ethnicityTRUE", "Value"] +
-        1.96 * summary(daoh.maori.regression.models[[3]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.50.p = summary(daoh.maori.regression.models[[3]])$coefficients["maori.ethnicityTRUE", "Pr(>|t|)"],
-      
-      maori.qr.75.diff = summary(daoh.maori.regression.models[[4]])$coefficients["maori.ethnicityTRUE", "Value"],
-      maori.qr.75.low = summary(daoh.maori.regression.models[[4]])$coefficients["maori.ethnicityTRUE", "Value"] -
-        1.96 * summary(daoh.maori.regression.models[[4]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.75.high = summary(daoh.maori.regression.models[[4]])$coefficients["maori.ethnicityTRUE", "Value"] +
-        1.96 * summary(daoh.maori.regression.models[[4]])$coefficients["maori.ethnicityTRUE", "Std. Error"],
-      maori.qr.75.p = summary(daoh.maori.regression.models[[4]])$coefficients["maori.ethnicityTRUE", "Pr(>|t|)"],
-      
-      maori.mort.90.reg.or = exp(summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Estimate"]),
+      maori.mort.90.reg.or = exp(summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Estimate"]),
       maori.mort.90.reg.or.low = exp(
-        summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Estimate"] -
-          1.96 * summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Std. Error"]
+        summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Estimate"] -
+          1.96 * summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Std. Error"]
       ),
       maori.mort.90.reg.or.high = exp(
-        summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Estimate"] +
-          1.96 * summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Std. Error"]
+        summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Estimate"] +
+          1.96 * summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Std. Error"]
       ),
-      maori.mort.90.reg.or.p = summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Pr(>|z|)"],
+      maori.mort.90.reg.or.p = summary(mort.90.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Pr(>|z|)"],
       
       
-      maori.mort.30.reg.or = exp(summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Estimate"]),
+      maori.mort.30.reg.or = exp(summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Estimate"]),
       maori.mort.30.reg.or.low = exp(
-        summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Estimate"] -
-          1.96 * summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Std. Error"]
+        summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Estimate"] -
+          1.96 * summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Std. Error"]
       ),
       maori.mort.30.reg.or.high = exp(
-        summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Estimate"] +
-          1.96 * summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Std. Error"]
+        summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Estimate"] +
+          1.96 * summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Std. Error"]
       ),
-      maori.mort.30.reg.or.p = summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityTRUE", "Pr(>|z|)"]
+      maori.mort.30.reg.or.p = summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Pr(>|z|)"]
     ),
     
     # report.docx = compile.manuscript(

@@ -17,10 +17,8 @@ rev3.targets = c(
   'time.series.raw.svy.des',
   'ethnicity.svy.des',
   'pre.post.raw.svy.des',
-  'daoh.mortality.plot',
-  'daoh.mortality.notransform.plot',
-  'daoh.pre.post.raw.plot',
-  'daoh.pre.post.risk.adj.plot',
+  # 'daoh.pre.post.raw.plot',
+  # 'daoh.pre.post.risk.adj.plot',
   'daoh.combined.pre.post.summary.dt',
   # 'risk.adjustment.plot.animation',
   'SSC.dra.riskgp.plot',
@@ -28,32 +26,21 @@ rev3.targets = c(
   'ethnicity.dra.riskgp.group.diff.plot',
   # 'SSC.dra.riskgp.daoh.animation',
   'publication.table.demographics',
+  'publication.figure.daoh.with.mort',
+  'publication.figure.daoh.with.mort.notrans',
   'publication.table.rev3.comprehensive.daoh.summary',
   'publication.table.rev3.comprehensive.ethnicity.daoh.summary',
   'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary',
-  # 'period.rect.plot',
-  # 'daoh.time.summary.dt',
-  # 'smooth.daoh.summary.dt',
-  # 'smooth.mortality.summary.dt',
-  # 'weekly.daoh.intervention.changepoint.mcp.fit',
-  # 'weekly.smooth.daoh.intervention.changepoint.mcp.fit',
-  # 'weekly.mort.90.day.intervention.changepoint.mcp.fit',
-  # 'weekly.mort.90.day.mcp.fit',
-  # 'weekly.daoh.mcp.fit',
-  # 'daoh.changepoint.plot',
-  # 'mort.90.day.changepoint.plot',
-  # 'date.status.dt',
-  # 'date.status.with.surgery.dt',
-  # 'daoh.weekly.follow.up.intervention.changepoint.mcp.fit',
-  # 'daoh.weekly.follow.up.mcp.fit'
-  # 'daoh.daily.follow.up.intervention.changepoint.mcp.fit',
-  # 'daoh.daily.follow.up.mcp.fit'
-  # 'daoh.intervention.changepoint.mcp.fit',
-  # 'mort.90.day.intervention.changepoint.mcp.fit'
-  'binomial.daoh.intervention.changepoint.mcp.fit',
-  'binomial.daoh.mcp.fit',
-  'binomial.mort.90.day.intervention.changepoint.mcp.fit',
-  'binomial.mort.90.day.mcp.fit'
+  'publication.results.demographics',
+  'publication.results.daoh',
+  'publication.figure.daoh.risk.adj',
+  'publication.results.mortality',
+  'publication.results.maori'
+
+  # 'binomial.daoh.intervention.changepoint.mcp.fit',
+  # 'binomial.daoh.mcp.fit',
+  # 'binomial.mort.90.day.intervention.changepoint.mcp.fit',
+  # 'binomial.mort.90.day.mcp.fit'
   
 )
 # make(checkwho_plan, 'risk.adjusted.regression.dt')
