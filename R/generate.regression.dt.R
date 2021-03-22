@@ -56,6 +56,10 @@ generate.regression.dt <- function(daoh.dt,
                           with = FALSE
                           ]
   
+  
+  regression.dt[, daoh.emp.logit := log((as.numeric(daoh) + 0.5) / (89 - as.numeric(daoh) + 0.5))]
+  
+  
   # Calculate and group age
   regression.dt = merge(x = regression.dt,
                         y = moh.patient.dt[,

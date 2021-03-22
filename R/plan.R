@@ -59,8 +59,8 @@ checkwho_plan =
     ),
     
     mcp.args.daoh.gaussian = list(
-      iter = 30000,
-      adapt = 3000,
+      iter = 10000,
+      adapt = 300,
       cores = 3
       # cores = 1
     ),
@@ -1272,59 +1272,89 @@ checkwho_plan =
     #           date.numeric = as.numeric(floor_date(daoh.period.start, unit = '1 day')))], 
     # 
     
-    # Changepoint analysis on weekly mean DAOH.
-    weekly.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(daoh ~ 1 + date.numeric,
-                   ~ 0 + date.numeric,
-                   ~ 0 + date.numeric),
-      data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
-      prior = changepoint.prior.dnorm.daoh,
-      sample = "both",
-      iter = mcp.args.daoh.gaussian$iter,
-      adapt = mcp.args.daoh.gaussian$adapt,
-      cores = mcp.args.daoh.gaussian$cores
-    ),
-
-    weekly.daoh.mcp.fit = mcp::mcp(
-      model = list(daoh ~ 1 + date.numeric),
-      data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
-      sample = "both",
-      iter = mcp.args.daoh.gaussian$iter,
-      adapt = mcp.args.daoh.gaussian$adapt,
-      cores = mcp.args.daoh.gaussian$cores
-    ),
+    # # Changepoint analysis on weekly mean DAOH.
+    # weekly.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+    #   model = list(daoh ~ 1 + date.numeric,
+    #                ~ 0 + date.numeric,
+    #                ~ 0 + date.numeric),
+    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
+    #   prior = changepoint.prior.dnorm.daoh,
+    #   sample = "both",
+    #   iter = mcp.args.daoh.gaussian$iter,
+    #   adapt = mcp.args.daoh.gaussian$adapt,
+    #   cores = mcp.args.daoh.gaussian$cores
+    # ),
+    # 
+    # weekly.daoh.mcp.fit = mcp::mcp(
+    #   model = list(daoh ~ 1 + date.numeric),
+    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
+    #   sample = "both",
+    #   iter = mcp.args.daoh.gaussian$iter,
+    #   adapt = mcp.args.daoh.gaussian$adapt,
+    #   cores = mcp.args.daoh.gaussian$cores
+    # ),
     
-    # Taking each patient's DAOH as a result from 90 trials.
-    binomial.daoh.mcp.dt = time.series.figure.dt[, .(
-      daoh = as.integer(daoh),
-      n.follow.up.days = daoh.limits[2] - daoh.limits[1] + 1,
+    gaussian.emp.logit.daoh.mcp.dt = time.series.figure.dt[, .(
+      daoh.emp.logit = daoh.emp.logit,
       date.numeric = as.integer(daoh.period.start)
     )],
     
-    binomial.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric,
+    gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+      model = list(daoh.emp.logit ~ 1 + date.numeric,
                    ~ 0 + date.numeric,
-                   ~ 0 + date.numeric),
-      data = binomial.daoh.mcp.dt,
+                   ~ 0 + date.numeric), 
+      data = gaussian.emp.logit.daoh.mcp.dt,
       sample = "both",
       prior = changepoint.prior.dnorm.daoh,
-      adapt = mcp.args.daoh.binomial$adapt,
-      iter = mcp.args.daoh.binomial$iter,
-      cores = mcp.args.daoh.binomial$cores,
-      chains = mcp.args.daoh.binomial$cores,
-      family = binomial()
+      adapt = mcp.args.daoh.gaussian$adapt,
+      iter = mcp.args.daoh.gaussian$iter,
+      cores = mcp.args.daoh.gaussian$cores,
+      chains = mcp.args.daoh.gaussian$cores,
+      family = gaussian()
     ),
     
-    binomial.daoh.mcp.fit = mcp::mcp(
-      model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric),
-      data = binomial.daoh.mcp.dt,
+    gaussian.emp.logit.daoh.mcp.fit = mcp::mcp(
+      model = list(daoh.emp.logit ~ 1 + date.numeric), 
+      data = gaussian.emp.logit.daoh.mcp.dt,
       sample = "both",
-      adapt = mcp.args.daoh.binomial$adapt,
-      iter = mcp.args.daoh.binomial$iter,
-      cores = mcp.args.daoh.binomial$cores,
-      chains = mcp.args.daoh.binomial$cores,
-      family = binomial()
+      adapt = mcp.args.daoh.gaussian$adapt,
+      iter = mcp.args.daoh.gaussian$iter,
+      cores = mcp.args.daoh.gaussian$cores,
+      chains = mcp.args.daoh.gaussian$cores,
+      family = gaussian()
     ),
+    
+    # # Taking each patient's DAOH as a result from 90 trials.
+    # binomial.daoh.mcp.dt = time.series.figure.dt[, .(
+    #   daoh = as.integer(daoh),
+    #   n.follow.up.days = daoh.limits[2] - daoh.limits[1] + 1,
+    #   date.numeric = as.integer(daoh.period.start)
+    # )],
+    # 
+    # binomial.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
+    #   model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric,
+    #                ~ 0 + date.numeric,
+    #                ~ 0 + date.numeric),
+    #   data = binomial.daoh.mcp.dt,
+    #   sample = "both",
+    #   prior = changepoint.prior.dnorm.daoh,
+    #   adapt = mcp.args.daoh.binomial$adapt,
+    #   iter = mcp.args.daoh.binomial$iter,
+    #   cores = mcp.args.daoh.binomial$cores,
+    #   chains = mcp.args.daoh.binomial$cores,
+    #   family = binomial()
+    # ),
+    # 
+    # binomial.daoh.mcp.fit = mcp::mcp(
+    #   model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric),
+    #   data = binomial.daoh.mcp.dt,
+    #   sample = "both",
+    #   adapt = mcp.args.daoh.binomial$adapt,
+    #   iter = mcp.args.daoh.binomial$iter,
+    #   cores = mcp.args.daoh.binomial$cores,
+    #   chains = mcp.args.daoh.binomial$cores,
+    #   family = binomial()
+    # ),
     
     # Taking each patient's mortality as a result from one trial.
     binomial.mort.90.day.mcp.dt = time.series.figure.dt[, .(

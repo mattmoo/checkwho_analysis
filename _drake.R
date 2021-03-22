@@ -36,6 +36,8 @@ rev3.targets = c(
   'publication.figure.daoh.risk.adj',
   'publication.results.mortality',
   'publication.results.maori'
+  # 'gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit',
+  # 'gaussian.emp.logit.daoh.mcp.fit'
 
   # 'binomial.daoh.intervention.changepoint.mcp.fit',
   # 'binomial.daoh.mcp.fit',

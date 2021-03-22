@@ -31,6 +31,7 @@ generate.pre.post.figure.dt <- function(risk.adjusted.regression.dt) {
                                                      icd.chapter.grouped,
                                                      daoh,
                                                      daoh.risk.adj,
+                                                     daoh.emp.logit,
                                                      LOS,
                                                      mort.30.day,
                                                      mort.90.day,
