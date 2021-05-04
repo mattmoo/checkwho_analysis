@@ -108,7 +108,7 @@ draw.svy.statistics.ht <-
                              use.names = TRUE)[order(measure)]
       
       summary.dt[, variable := NULL]
-      summary.dt[, ci.char := sprintf("[ %4.5f - %4.5f ]", ci.low, ci.high)]
+      summary.dt[, ci.char := sprintf("[%4.5f , %4.5f]", ci.low, ci.high)]
       
       setcolorder(summary.dt,
                   neworder = c("group.name", "measure", "daoh", "ci.low", "ci.high", "se", "sesq"))

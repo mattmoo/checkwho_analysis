@@ -33,7 +33,8 @@ generate.dra.riskgp.plot <- function(risk.adjusted.regression.dt,
       breaks = seq(0, 90, 5),
       limits = c(40, 90),
       palette = 'Spectral',
-      direction = 1
+      direction = 1,
+      name = 'Mean DAOH'
     ) +
     scale_x_discrete(labels = x.y.labels, name = riskgp.axis.names[1]) +
     scale_y_discrete(labels = x.y.labels, name = riskgp.axis.names[2]) +

@@ -43,7 +43,7 @@ generate.svy.statistics.list <-
           )
         ),
         stats = survey::svyranktest(as.formula(paste0(
-          outcome, '~', by.group Thanks
+          outcome, '~', by.group
         )), svy.des, test = "wilcoxon")
       )
       

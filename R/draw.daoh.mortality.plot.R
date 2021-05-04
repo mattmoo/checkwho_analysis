@@ -90,7 +90,8 @@ draw.daoh.mortality.plot <- function(input.dt, transform.y = TRUE) {
                     name="90-day",
                     breaks=c(0, 1),
                     labels=c("Alive", "Dead")) + 
-    theme(legend.position = "none") 
+    theme(legend.position = "none") +
+    ylab("Percentage of cohort")
     # guides(fill=guide_legend()) 
   
   if (transform.y) {

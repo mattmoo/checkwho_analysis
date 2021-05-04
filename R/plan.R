@@ -1,6 +1,8 @@
-set.seed(12611000406909 %% .Machine$integer.max)
+# set.seed(12611000406909 %% .Machine$integer.max)
 
-base.input.directory = 'P:/FMHSfiles/SCIENCE/CheckWHO/data/derived/encrypted_id_source'
+derived.input.directory = 'P:/FMHSfiles/SCIENCE/CheckWHO/data/derived'
+base.input.directory = file.path(derived.input.directory, 'encrypted_id_source')
+loo.input.directory = file.path(derived.input.directory, 'vm_calculations/rds')
 moh.csv.directory = 'moh'
 adhb.csv.directory = 'adhb'
 
@@ -26,7 +28,8 @@ checkwho_plan =
     
     template.docx.filein = 'P:/FMHSfiles/WRITING/blankTemplate.docx',
     report.output.dir = 'P:/FMHSfiles/SCIENCE/CheckWHO/reports',
-    report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.4.2.docx',
+    # report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision2/checkwho_v6.4.2.docx',
+    report.docx.filein = 'P:/FMHSfiles/SCIENCE/CheckWHO/manuscripts/Revision3/oldVersions/checkwho_v7.0.2.docx',
     
     # The first revision had a wee issue where all of the events were the first
     # per patient per period. If this is FALSE, replicate that. If TRUE, get a
@@ -516,21 +519,21 @@ checkwho_plan =
     SSC.dra.riskgp.plot = generate.dra.riskgp.plot(
       risk.adjusted.regression.dt,
       riskgp.axis.names = riskgp.axis.names,
-      shape.scale = c(1,20)),
+      shape.scale = c(1,17)),
     
     SSC.dra.riskgp.group.diff.plot = draw.dra.riskgp.group.diff.plot(
       risk.adjusted.regression.dt,
       summary.col.name = 'SSC',
       riskgp.col.names = c('SSC.riskgpMORT', 'SSC.riskgpLOS'),
       riskgp.axis.names = riskgp.axis.names,
-      shape.scale = c(1,20)),
+      shape.scale = c(1,17)),
     
     ethnicity.dra.riskgp.group.diff.plot = draw.dra.riskgp.group.diff.plot(
       risk.adjusted.regression.dt,
       summary.col.name = 'maori.ethnicity',
       riskgp.col.names = c('ethnicity.riskgpMORT', 'ethnicity.riskgpLOS'),
       riskgp.axis.names = riskgp.axis.names,
-      shape.scale = c(1,20)),
+      shape.scale = c(1,17)),
     
     SSC.dra.riskgp.daoh.animation = generate.dra.riskgp.daoh.animation(
       risk.adjusted.regression.dt),
@@ -621,6 +624,10 @@ checkwho_plan =
       ssc.implementation.end
     ),
     
+    period.rect.scale = scale_fill_discrete(
+      name = 'Period name'
+    ),
+    
     # x.time.scale = scale_x_date(
     #   name = 'Year',
     #   date_labels = '%Y',
@@ -628,6 +635,8 @@ checkwho_plan =
     #   date_minor_breaks = '3 months',
     #   limits = NULL
     # ),
+    emp.logit = function(daoh) (log((as.numeric(daoh) + 0.5) / (89 - as.numeric(daoh) + 0.5))),
+    inverse.emp.logit = function(daoh.t) ((89+0.5)*exp(daoh.t)-0.5)/((exp(daoh.t)+1)),
     
     x.time.scale = scale_x_continuous(
       labels = function(x)
@@ -695,20 +704,27 @@ checkwho_plan =
       round.unit = '3 month',
       ci.method = "clopper-pearson"),
     
+    smooth.duration = c(
+      # '3 months'
+      # ,
+      # '6 months'
+      # ,
+      '1 year'), 
+    
     smooth.daoh.summary.dt = generate.smooth.summary.dt(
       data.dt = time.series.figure.dt,
       time.col.name = 'daoh.period.start',
-      measure.col.names = c('daoh'),
-      smooth.duration = c('3 months', '6 months', '1 year'),
+      measure.col.names = c('daoh', 'daoh.emp.logit'),
+      smooth.duration = smooth.duration,
       conf.level = 0.95
-      
+
     ),
-    
+
     smooth.mortality.summary.dt = generate.smooth.summary.dt(
       data.dt = time.series.figure.dt,
       time.col.name = 'daoh.period.start',
       measure.col.names = c('mort.90.day', 'mort.30.day'),
-      smooth.duration = c('3 months', '6 months', '1 year'),
+      smooth.duration = smooth.duration,
       conf.level = 0.95
       
     ),
@@ -831,21 +847,22 @@ checkwho_plan =
     
     daoh.pre.post.raw.plot = plot.daoh.histogram(input.dt = pre.post.figure.dt,
                                                  by.group = 'SSC',
-                                                 daoh.col.name = 'daoh'),
+                                                 daoh.col.name = 'daoh') + labs(y = 'Percentage of group'),
 
     daoh.pre.post.risk.adj.plot = plot.daoh.barplot(input.summary.dt = daoh.risk.adj.pre.post.summary.dt,
                                                     by.group = 'SSC',
-                                                    daoh.col.name = 'daoh'),
+                                                    daoh.col.name = 'daoh') + labs(y = 'Percentage of group'),
     
     
     rename.coefficients.list = c(
       'Constant' = '(Intercept)',
+      'Age (per year)' = 'age',
       'Post-SSC (vs Pre-SSC)' = 'SSCPost',
       'Female (vs Male)' = 'genderFemale',
       'Acute (vs Not acute or unknown)' = 'asa.acuityAcute',
-      '34-48yo (vs 16-33)' = 'age.group34-48',
-      '49-64yo (vs 16-33)' = 'age.group49-64',
-      '65-78yo (vs 16-33)' = 'age.group65-78',
+      # '34-48yo (vs 16-33)' = 'age.group34-48',
+      # '49-64yo (vs 16-33)' = 'age.group49-64',
+      # '65-78yo (vs 16-33)' = 'age.group65-78',
       '79+yo (vs 16-33)' = 'age.group79+',
       'ASA2 (vs ASA1)' = 'asa.statusASA 2',
       'ASA3 (vs ASA1)' = 'asa.statusASA 3',
@@ -891,22 +908,23 @@ checkwho_plan =
     ), 
     
     group.coefficients.list = list(
-      group.1 = c('SSCPost',
+      group.1 = c('age'),
+      group.2 = c('SSCPost',
                   'genderFemale',
                   # 'maori.ethnicityNon-Maori',
                   'ethnicityEuropean',
                   'ethnicityAsian',
                   'ethnicityPacific Peoples',
                   'ethnicityOther'),
-      group.2 = c('acuityAcute',
+      group.3 = c('acuityAcute',
                   'clinical.severity2',
                   'clinical.severity3',
                   'clinical.severity4',
                   'clinical.severity5'),
-      group.3 = c('age.group34-48',
-                  'age.group49-64',
-                  'age.group65-78',
-                  'age.group79+'),
+      # group.3 = c('age.group34-48',
+      #             'age.group49-64',
+      #             'age.group65-78',
+      #             'age.group79+'),
       group.4 = c('icd.chapter.groupedProcedures on Digestive System',
                   'icd.chapter.groupedProcedures on Urinary System',
                   'icd.chapter.groupedProcedures on Nervous System',
@@ -1185,176 +1203,24 @@ checkwho_plan =
                                  time.series.figure.dt,
                                  n.iterations = n.iterations.for.perm.tests),
     
-    # Changepoint models
-    # changepoint.model.list = generate.changepoint.model.list(
-    #   time.series.figure.dt,
-    #   changepoint.measure.list,
-    #   ssc.implementation.start,
-    #   ssc.implementation.end,
-    #   changepoint.model.func = changepoint.model.func,
-    #   adapt = mcp.args$adapt,
-    #   iter = mcp.args$iter,
-    #   cores = mcp.args$cores
-    # ), 
-    
-    # changepoint.model.with.prior.dirichlet.list = generate.changepoint.model.list(
-    #   time.series.figure.dt,
-    #   changepoint.measure.list,
-    #   ssc.implementation.start,
-    #   ssc.implementation.end,
-    #   changepoint.model.func = changepoint.model.func,
-    #   changepoint.prior.list = changepoint.prior.dirichlet.list,
-    #   adapt = mcp.args$adapt,
-    #   iter = mcp.args$iter,
-    #   cores = mcp.args$cores
-    # ), 
-    # 
-    # changepoint.model.with.prior.dunif.list = generate.changepoint.model.list(
-    #   time.series.figure.dt,
-    #   changepoint.measure.list,
-    #   ssc.implementation.start,
-    #   ssc.implementation.end,
-    #   changepoint.prior.dunif.list,
-    #   adapt = mcp.args$adapt,
-    #   iter = mcp.args$iter,
-    #   cores = mcp.args$cores
-    # ),
-    
-    # changepoint.model.with.prior.dnorm.list = generate.changepoint.model.list(
-    #   time.series.figure.dt,
-    #   changepoint.measure.list,
-    #   ssc.implementation.start,
-    #   ssc.implementation.end,
-    #   changepoint.prior.dnorm.list,
-    #   changepoint.model.func = changepoint.model.func,
-    #   adapt = mcp.args$adapt,
-    #   iter = mcp.args$iter
-    # ), 
-    
-    # changepoint.model.with.prior.gradient.change.list = generate.changepoint.model.list(
-    #   time.series.figure.dt,
-    #   changepoint.measure.list,
-    #   ssc.implementation.start,
-    #   ssc.implementation.end,
-    #   changepoint.prior.list = changepoint.prior.gradient.change.list,
-    #   changepoint.model.func = changepoint.model.func,
-    #   adapt = mcp.args$adapt,
-    #   iter = mcp.args$iter,
-    #   cores = mcp.args$cores
-    # ), 
-    # 
-    # changepoint.model.null.list = generate.changepoint.model.list(
-    #   time.series.figure.dt,
-    #   changepoint.measure.list,
-    #   ssc.implementation.start,
-    #   ssc.implementation.end,
-    #   changepoint.prior.list = NULL,
-    #   changepoint.model.func = changepoint.model.null.func,
-    #   adapt = mcp.args$adapt,
-    #   iter = mcp.args$iter,
-    #   cores = mcp.args$cores
-    # ), 
-    
-    # mcp.daoh.modeling.dt = time.series.figure.dt[, .(
-    #   date = daoh.period.start,
-    #   date.numeric = as.numeric(daoh.period.start),
-    #   daoh = daoh,
-    #   mort.90.day = mort.90.day,
-    #   mort.30.day = mort.30.day
-    # )],
-    # 
-    # mcp.mort.modeling.dt = time.series.figure.dt[, .(
-    #   daoh = mean(daoh),
-    #   mort.90.day = sum(mort.90.day),
-    #   mort.30.day = sum(mort.30.day),
-    #   N = .N
-    # ), by = .(date = floor_date(daoh.period.start, unit = '1 day'),
-    #           date.numeric = as.numeric(floor_date(daoh.period.start, unit = '1 day')))], 
-    # 
-    
-    # # Changepoint analysis on weekly mean DAOH.
-    # weekly.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-    #   model = list(daoh ~ 1 + date.numeric,
-    #                ~ 0 + date.numeric,
-    #                ~ 0 + date.numeric),
-    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
-    #   prior = changepoint.prior.dnorm.daoh,
-    #   sample = "both",
-    #   iter = mcp.args.daoh.gaussian$iter,
-    #   adapt = mcp.args.daoh.gaussian$adapt,
-    #   cores = mcp.args.daoh.gaussian$cores
-    # ),
-    # 
-    # weekly.daoh.mcp.fit = mcp::mcp(
-    #   model = list(daoh ~ 1 + date.numeric),
-    #   data = daoh.time.summary.dt[round.unit == '1 week', .(date.numeric = as.numeric(time), daoh = mean)],
-    #   sample = "both",
-    #   iter = mcp.args.daoh.gaussian$iter,
-    #   adapt = mcp.args.daoh.gaussian$adapt,
-    #   cores = mcp.args.daoh.gaussian$cores
-    # ),
+
     
     gaussian.emp.logit.daoh.mcp.dt = time.series.figure.dt[, .(
       daoh.emp.logit = daoh.emp.logit,
       date.numeric = as.integer(daoh.period.start)
     )],
     
-    gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(daoh.emp.logit ~ 1 + date.numeric,
-                   ~ 0 + date.numeric,
-                   ~ 0 + date.numeric), 
-      data = gaussian.emp.logit.daoh.mcp.dt,
-      sample = "both",
-      prior = changepoint.prior.dnorm.daoh,
-      adapt = mcp.args.daoh.gaussian$adapt,
-      iter = mcp.args.daoh.gaussian$iter,
-      cores = mcp.args.daoh.gaussian$cores,
-      chains = mcp.args.daoh.gaussian$cores,
-      family = gaussian()
-    ),
+
+    # Calculated on VM.
+    gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory,
+        'gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit.RDS')),
+    gaussian.emp.logit.daoh.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory, 
+        'gaussian.emp.logit.daoh.mcp.fit.RDS')),
     
-    gaussian.emp.logit.daoh.mcp.fit = mcp::mcp(
-      model = list(daoh.emp.logit ~ 1 + date.numeric), 
-      data = gaussian.emp.logit.daoh.mcp.dt,
-      sample = "both",
-      adapt = mcp.args.daoh.gaussian$adapt,
-      iter = mcp.args.daoh.gaussian$iter,
-      cores = mcp.args.daoh.gaussian$cores,
-      chains = mcp.args.daoh.gaussian$cores,
-      family = gaussian()
-    ),
-    
-    # # Taking each patient's DAOH as a result from 90 trials.
-    # binomial.daoh.mcp.dt = time.series.figure.dt[, .(
-    #   daoh = as.integer(daoh),
-    #   n.follow.up.days = daoh.limits[2] - daoh.limits[1] + 1,
-    #   date.numeric = as.integer(daoh.period.start)
-    # )],
-    # 
-    # binomial.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-    #   model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric,
-    #                ~ 0 + date.numeric,
-    #                ~ 0 + date.numeric),
-    #   data = binomial.daoh.mcp.dt,
-    #   sample = "both",
-    #   prior = changepoint.prior.dnorm.daoh,
-    #   adapt = mcp.args.daoh.binomial$adapt,
-    #   iter = mcp.args.daoh.binomial$iter,
-    #   cores = mcp.args.daoh.binomial$cores,
-    #   chains = mcp.args.daoh.binomial$cores,
-    #   family = binomial()
-    # ),
-    # 
-    # binomial.daoh.mcp.fit = mcp::mcp(
-    #   model = list(daoh | trials(n.follow.up.days) ~ 1 + date.numeric),
-    #   data = binomial.daoh.mcp.dt,
-    #   sample = "both",
-    #   adapt = mcp.args.daoh.binomial$adapt,
-    #   iter = mcp.args.daoh.binomial$iter,
-    #   cores = mcp.args.daoh.binomial$cores,
-    #   chains = mcp.args.daoh.binomial$cores,
-    #   family = binomial()
-    # ),
     
     # Taking each patient's mortality as a result from one trial.
     binomial.mort.90.day.mcp.dt = time.series.figure.dt[, .(
@@ -1363,126 +1229,38 @@ checkwho_plan =
       date.numeric = as.integer(daoh.period.start)
     )],
     
-    binomial.mort.90.day.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(
-        mort.90.day | trials(n.follow.up) ~ 1 + date.numeric,
-        ~ 0 + date.numeric,
-        ~ 0 + date.numeric
-      ),
-      data = binomial.mort.90.day.mcp.dt,
-      sample = "both",
-      prior = changepoint.prior.dnorm.mortality,
-      adapt = mcp.args.daoh.binomial$adapt,
-      iter = mcp.args.daoh.binomial$iter,
-      cores = mcp.args.daoh.binomial$cores,
-      chains = mcp.args.daoh.binomial$cores,
-      family = binomial()
-    ), 
-    
-    binomial.mort.90.day.mcp.fit = mcp::mcp(
-      model = list(mort.90.day | trials(n.follow.up) ~ 1 + date.numeric),
-      data = binomial.mort.90.day.mcp.dt,
-      sample = "both",
-      adapt = mcp.args.daoh.binomial$adapt,
-      iter = mcp.args.daoh.binomial$iter,
-      cores = mcp.args.daoh.binomial$cores,
-      chains = mcp.args.daoh.binomial$cores,
-      family = binomial()
-    ), 
-    # weekly.smooth.daoh.intervention.changepoint.mcp.fit = mcp::mcp(
-    #   model = list(daoh ~ 1 + date.numeric,
-    #                ~ 0 + date.numeric,
-    #                ~ 0 + date.numeric),
-    #   data = smooth.daoh.summary.dt[smooth.duration == '1 year', .(date.numeric = as.numeric(time), daoh = fit)],
-    #   sample = "both",
-    #   iter = mcp.args.daoh$iter,
-    #   adapt = mcp.args.daoh$adapt,
-    #   cores = mcp.args.mort$cores
-    # ), 
+    # Calculated on VM.
+    binomial.mort.90.day.intervention.changepoint.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory,
+        'binomial.mort.90.day.intervention.changepoint.mcp.fit.RDS')),
+    binomial.mort.90.day.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory, 
+        'binomial.mort.90.day.mcp.fit.RDS')),
     
     
-    # daoh.daily.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
-    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
-    #                ~ 0 + ar(1) + date.numeric,
-    #                ~ 0 + ar(1) + date.numeric),
-    #   data = daoh.daily.follow.up.date.dt,
-    #   sample = "both",
-    #   prior = changepoint.prior.dnorm.mortality,
-    #   iter = mcp.args.daoh$iter,
-    #   adapt = mcp.args.daoh$adapt,
-    #   cores = mcp.args.mort$cores,
-    #   family = binomial()
-    # ),
-    # 
-    # daoh.daily.follow.up.mcp.fit = mcp::mcp(
-    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
-    #   data = daoh.daily.follow.up.date.dt,
-    #   sample = "both",
-    #   # prior = changepoint.prior.dnorm.mortality,
-    #   iter = mcp.args.daoh$iter,
-    #   adapt = mcp.args.daoh$adapt,
-    #   cores = mcp.args.mort$cores,
-    #   family = binomial()
-    # ),
-    # 
-    # daoh.weekly.follow.up.intervention.changepoint.mcp.fit = mcp::mcp(
-    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric,
-    #                ~ 0 + ar(1) + date.numeric,
-    #                ~ 0 + ar(1) + date.numeric),
-    #   data = daoh.weekly.follow.up.date.dt,
-    #   sample = "both",
-    #   prior = changepoint.prior.dnorm.mortality,
-    #   iter = mcp.args.daoh$iter,
-    #   adapt = mcp.args.daoh$adapt,
-    #   cores = mcp.args.mort$cores,
-    #   family = binomial()
-    # ),
-    # 
-    # daoh.weekly.follow.up.mcp.fit = mcp::mcp(
-    #   model = list(dih.n | trials(N) ~ 1 + ar(1) + date.numeric),
-    #   data = daoh.weekly.follow.up.date.dt,
-    #   sample = "both",
-    #   # prior = changepoint.prior.dnorm.mortality,
-    #   iter = mcp.args.daoh$iter,
-    #   adapt = mcp.args.daoh$adapt,
-    #   cores = mcp.args.mort$cores,
-    #   family = binomial()
-    # ),
-    
-    weekly.mort.90.day.intervention.changepoint.mcp.fit = mcp::mcp(
-      model = list(x | trials(N) ~ 1 + date.numeric,
-                   ~ 0 + date.numeric,
-                   ~ 0 + date.numeric),
-      data = mortality.time.summary.dt[measure == 'mort.90.day' & round.unit == '1 week', .(date.numeric = as.numeric(time), x = x, N = N)],
-      prior = changepoint.prior.dnorm.mortality,
-      sample = "both",
-      iter = mcp.args.mort$iter,
-      adapt = mcp.args.mort$adapt,
-      cores = mcp.args.mort$cores,
-      family = binomial(link = "logit")
-    ),
-    
-    weekly.mort.90.day.mcp.fit = mcp::mcp(
-      model = list(x | trials(N) ~ 1 + date.numeric),
-      data = mortality.time.summary.dt[measure == 'mort.90.day' & round.unit == '1 week', .(date.numeric = as.numeric(time), x = x, N = N)],
-      sample = "both",
-      iter = mcp.args.mort$iter,
-      adapt = mcp.args.mort$adapt,
-      cores = mcp.args.mort$cores,
-      family = binomial(link = "logit")
-    ),
+    # Calculated on VM.
+    bernoulli.mort.90.day.intervention.changepoint.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory,
+        'bernoulli.mort.90.day.intervention.changepoint.mcp.fit.RDS')),
+    bernoulli.mort.90.day.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory, 
+        'bernoulli.mort.90.day.mcp.fit.RDS')),
     
     changepoint.plot.smoothing.duration = "1 year",
     ribbon.transparency = 0.15,
     ribbon.colour = grDevices::rgb(0, 0, 0, ribbon.transparency),
+    changepoint.n.lines = 100,
     
     mort.90.day.changepoint.plot = draw.changepoint.plot(
-      mcp.fit = weekly.mort.90.day.intervention.changepoint.mcp.fit,
+      mcp.fit = bernoulli.mort.90.day.intervention.changepoint.mcp.fit,
       smooth.summary.dt = smooth.mortality.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
                                                         measure == 'mort.90.day'],
       y.scale =
         scale_y_continuous(
-          labels = scales::percent,
           name = element_blank(),
           limits = c(0, NA),
           breaks = seq(0, 0.2, by = 0.01),
@@ -1490,76 +1268,91 @@ checkwho_plan =
         ),
       x.time.scale = x.time.scale,
       period.rect.plot = period.rect.plot,
+      period.rect.scale = period.rect.scale,
       density.height = .025,
-      n.lines = 200,
-      rev.fill.scale = TRUE
+      n.lines = changepoint.n.lines,
+      effect.fill.scale = scale_fill_continuous_divergingx(
+        name = 'Effect size\n(logit)',
+        palette = 'RdBu',
+        rev = TRUE,
+        mid = 0,
+        na.value = "black")
     ), 
     
-    # daoh.changepoint.plot = draw.changepoint.plot(
-    #   mcp.fit = weekly.daoh.intervention.changepoint.mcp.fit,
-    #   smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration],
-    #   y.scale = scale_y_continuous(
-    #       name = 'DAOH',
-    #       limits = c(72, 81),
-    #       breaks = seq(0, 90, by = 1)
-    #     ),
-    #   x.time.scale = x.time.scale,
-    #   period.rect.plot = period.rect.plot,
-    #   density.height = 3,
-    #   n.lines = 200
-    # ), 
-    
-    changepoint.model.with.prior.dirichlet.plot = draw.changepoint.plot(
-      changepoint.model.with.prior.dirichlet.list,
-      names(changepoint.measure.list),
-      period.rect.plot
-    ),
-    
-    changepoint.with.prior.dunif.plot = draw.changepoint.plot(
-      changepoint.model.with.prior.dunif.list,
-      names(changepoint.model.with.prior.dunif.list),
-      period.rect.plot
-    ),
-    
-    # changepoint.with.prior.dnorm.plot = draw.changepoint.plot(
-    #   changepoint.model.with.prior.dnorm.list,
-    #   names(changepoint.measure.list),
-    #   period.rect.plot
-    # ),
-    
-    changepoint.model.with.prior.gradient.change.plot = draw.changepoint.plot(
-      changepoint.model.with.prior.gradient.change.list,
-      names(changepoint.measure.list),
-      period.rect.plot
-    ),
-    
-    # Testing hypothesis that there is a change point between implementation
-    # start and implementation end.
-    changepoint.after.pre.hypothesis.testing.list =
-      generate.changepoint.hypothesis.testing.list(
-        hypothesis = changepoint.during.intervention.or.post.hypothesis,      
-        changepoint.model.list = changepoint.model.with.prior.gradient.change.list
+    daoh.changepoint.plot = draw.changepoint.plot(
+      mcp.fit = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit,
+      smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
+                                                   measure == 'daoh'],
+      y.scale = scale_y_continuous(
+        name = 'DAOH',
+        limits = c(78, NA),
+        breaks = seq(0, 90, by = 1)
       ),
+      x.time.scale = x.time.scale,
+      period.rect.plot = period.rect.plot,
+      period.rect.scale = period.rect.scale,
+      density.height = 2.5,
+      n.lines = changepoint.n.lines,
+      transform.function = inverse.emp.logit,
+      effect.fill.scale = scale_fill_continuous_divergingx(
+        name = 'Effect size\n(empirical logit)',
+        palette = 'RdBu',
+        mid = 0,
+        na.value = "black",
+        labels = function(x) sprintf("%+.2f", x))
+    ),
     
-    # changepoint.during.intervention.hypothesis.testing.list =
-    #   generate.changepoint.hypothesis.testing.list(
-    #     hypothesis = changepoint.during.intervention.hypothesis,      
-    #     changepoint.model.list = changepoint.model.with.prior.dunif.list
-    #   ),
+    daoh.emp.logit.changepoint.plot = draw.changepoint.plot(
+      mcp.fit = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit,
+      smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
+                                                   measure == 'daoh.emp.logit',
+                                                 .(time,
+                                                   fit = inverse.emp.logit(fit),
+                                                   ci.low = inverse.emp.logit(ci.low),
+                                                   ci.high = inverse.emp.logit(ci.high))],
+      y.scale = scale_y_continuous(
+        name = 'DAOH (transformed)',
+        limits = c(77, NA),
+        breaks = seq(0, 90, by = 1)
+      ),
+      x.time.scale = x.time.scale,
+      period.rect.plot = period.rect.plot,
+      period.rect.scale = period.rect.scale,
+      density.height = 2.5,
+      n.lines = changepoint.n.lines,
+      transform.function = inverse.emp.logit,
+      effect.fill.scale = scale_fill_continuous_divergingx(
+        name = 'Effect size\n(empirical logit)',
+        palette = 'RdBu',
+        mid = 0,
+        na.value = "black",
+        labels = function(x) sprintf("%+.2f", x))
+    ), 
     
+    mort.90.day.effect.size.plot = draw.effect.size.plot(
+      mcp.fit = bernoulli.mort.90.day.intervention.changepoint.mcp.fit,
+      prior = FALSE,
+      x.label = 'Effect size (logit)'
+    ),
+    
+    daoh.emp.logit.effect.size.plot = draw.effect.size.plot(
+      mcp.fit = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit,
+      prior = FALSE,
+      x.label = 'Effect size (empirical logit)'
+    ),
+
     # Test the fit of the model with prior of uniform likelihood of intervention
     # during implementation vs one with no change points at all.
-    # loo.testing.list = generate.loo.testing.list(
-    #   changepoint.model.null.list,
-    #   # changepoint.model.with.prior.dunif.list,
-    #   changepoint.model.with.prior.gradient.change.list
-    #   # changepoint.model.with.prior.dnorm.list,
-    #   # changepoint.model.with.prior.dirichlet.list
-    # ),
-    # 
+    loo.testing.list = generate.loo.testing.list(
+      list('90-day mortality' = bernoulli.mort.90.day.mcp.fit,
+           'DAOH' = gaussian.emp.logit.daoh.mcp.fit),
+      list('90-day mortality' = bernoulli.mort.90.day.intervention.changepoint.mcp.fit,
+           'DAOH' = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit)
+    ),
+
     # # Generate a table for presenting LOO results.
     # loo.testing.ht = draw.loo.testing.ht(loo.testing.list,
-    #                                      changepoint.measure.list), 
+    #                                      changepoint.measure.list),
     
     # Generate a table for the Bayesian hypothesis testing results.
     bayes.testing.ht = draw.bayes.hypothesis.testing.ht(
@@ -1593,6 +1386,24 @@ checkwho_plan =
     ),
     
     
+    publication.results.demographics = list(
+      n = adhb.theatre.event.dt[`Actual Into Theatre Date Time` >= min.date & `Actual Into Theatre Date Time` <= max.date,.N],
+      n.pre = eligibility.dt[pre.eligible.and.unique == TRUE, .N],
+      n.post = eligibility.dt[post.eligible.and.unique == TRUE, .N],
+      n.pre.post = eligibility.dt[pre.post.eligible.and.unique == TRUE, .N],
+      n.time.series = time.series.figure.dt[,.N],
+      p.maori = time.series.figure.dt[,.N, by = maori.ethnicity][,p := N/sum(N)]
+      
+    ),
+    
+    publication.results.daoh.emp.logit.changepoint = generate.mcp.results.list(
+      gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit
+    ),
+    
+    publication.results.mort.90.changepoint = generate.mcp.results.list(
+      bernoulli.mort.90.day.intervention.changepoint.mcp.fit
+    ),
+    
     publication.table.demographics = generate.publication.table(
       name = 'groupSummary',
       input.table = demographic.table.gtsummary,
@@ -1606,11 +1417,11 @@ checkwho_plan =
       input.plot = daoh.mortality.plot,
       caption = paste0(
         "DAOH\u2089\u2080 recorded for ",
-        time.series.figure.dt[,.N], 
+        scales::comma(time.series.figure.dt[,.N]), 
         " patients who had operations in Auckland City Hospital, July 2004 to December 2013 (light grey), of whom ",
-        time.series.figure.dt[mort.90.day == TRUE,.N],
+        scales::comma(time.series.figure.dt[mort.90.day == TRUE,.N]),
         " died (",
-        100 * mean(time.series.figure.dt[,mort.90.day]),
+        round(100 * mean(time.series.figure.dt[,mort.90.day]), digits = 1),
         "%) before 90 postoperative days (dark grey). ",
         "Note square root transform on y-axis, untransformed data are presented in FIG_rawNoTransPlot_REF."
       ),
@@ -1622,9 +1433,9 @@ checkwho_plan =
       input.plot = daoh.mortality.notransform.plot,
       caption = paste0(
         "DAOH\u2089\u2080 recorded for ",
-        time.series.figure.dt[,.N], 
+        scales::comma(time.series.figure.dt[,.N]), 
         " patients who had operations in Auckland City Hospital, July 2004 to December 2013 (light grey), of whom ",
-        time.series.figure.dt[mort.90.day == TRUE,.N],
+        scales::comma(time.series.figure.dt[mort.90.day == TRUE,.N]),
         " died (",
         100 * mean(time.series.figure.dt[,mort.90.day]),
         "%) before 90 postoperative days (dark grey). ",
@@ -1649,8 +1460,12 @@ checkwho_plan =
       name = 'daohTab',
       input.table = pre.post.daoh.statistics.ht,
       caption = paste0(
-        "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
-        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
+        "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC, n=",
+        scales::comma(publication.results.demographics$n.pre),
+        ") and the Post-SSC Period (Post SSC, n=",
+        scales::comma(publication.results.demographics$n.post),
+        "), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
+        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Kruskal-Wallis tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
       )
     ),
     
@@ -1659,7 +1474,7 @@ checkwho_plan =
       input.table = ethnicity.daoh.statistics.ht,
       caption = paste0(
         "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
-        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
+        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Kruskal-Wallis U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
       )
     ),
     
@@ -1668,7 +1483,7 @@ checkwho_plan =
       input.table = maori.ethnicity.daoh.statistics.ht,
       caption = paste0(
         "DAOH\u2089\u2080 for the Pre-SSC Period (Pre-SSC) and the Post-SSC Period (Post SSC), both unadjusted and risk-adjusted, and the differences between the Pre-SSC and Post-SSC periods. ",
-        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Wilcoxon-Mann-Whitney U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
+        "Differences in the overall DAOH\u2089\u2080 distributions were assessed using Kruskal-Wallis U tests. (SE: Standard error of the mean, SSC: Surgical Safety Checklist)."
       )
     ),
     
@@ -1760,38 +1575,141 @@ checkwho_plan =
       caption = paste0("Types of facility to which patients were admitted.")
     ),
     
-    publication.figure.daoh.exceedance.time.plot = generate.publication.figure(
-      name = 'daohTimePlot',
-      input.plot = daoh.exceedance.time.plot,
+    # publication.figure.daoh.exceedance.time.plot = generate.publication.figure(
+    #   name = 'daohTime',
+    #   input.plot = daoh.exceedance.time.plot,
+    #   caption = paste0(
+    #     "Percentage of patients per quarter with risk-adjusted DAOH\u2089\u2080 exceeding specified quantiles. ",
+    #     "The registered Pre-SSC and Post-SSC periods are shaded red and blue respectively, the Implementation Period is shaded green."
+    #   ),
+    #   aspect.ratio = 1
+    # ),
+    # 
+    publication.figure.daoh.changepoint.plot = generate.publication.figure(
+      name = 'daohChangepoint',
+      input.plot = daoh.emp.logit.changepoint.plot,
       caption = paste0(
-        "Percentage of patients per quarter with risk-adjusted DAOH\u2089\u2080 exceeding specified quantiles. ",
-        "The registered Pre-SSC and Post-SSC periods are shaded red and blue respectively, the Implementation Period is shaded green."
-      ),
-      aspect.ratio = 1
-    ),
-    
-    publication.figure.mortality.time.plot = generate.publication.figure(
-      name = 'mortTimePlot',
-      input.plot = mortality.time.plot,
-      caption = paste0(
-        "Mortality rates (30-day and 90-day) per quarter. ",
-        "The registered Pre-SSC and Post-SSC periods are shaded red and blue respectively, the Implementation Period is shaded green."
+        "Changepoint model fitted on empirical logit DAOH\u2089\u2080. ",
+        "The dark line is empirical logit DAOH\u2089\u2080 smoothed using locally estimated regression with a span of ",
+        changepoint.plot.smoothing.duration, 
+        ", with 95% confidence intervals. ",
+        "Lighter lines are a random selection of ",
+        changepoint.n.lines,
+        " models from the posterior sampling. ",
+        "The first changepoint for each of those models are indicated with a point. ",
+        "Colour indicates the effect size, shape indicates the effect direction. ",
+        "Density of the estimates for ",
+        scales::comma(niter(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post)*nchain(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post)),
+        " iterations in ",
+        nchain(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post),
+        " chains are overlaid below (not presented on a density scale)."
       ),
       aspect.ratio = 1.5
     ),
     
-    
-    publication.figure.changepoint.model.with.prior.gradient.change.plot = generate.publication.figure(
-      name = 'changepointWithPriorGradient',
-      input.plot = changepoint.model.with.prior.gradient.change.plot,
+    publication.figure.mort.90.day.changepoint.plot = generate.publication.figure(
+      name = 'mort90Changepoint',
+      input.plot = mort.90.day.changepoint.plot,
       caption = paste0(
-        "Results from the changepoint models fitted to the Extended Period, with regularisation priors of two changepoints, with positive (for DAOH) or negative (for mortality) gradients. ",
-        "Percentages of patients equalling or exceeding various quantiles of overall risk-adjusted DAOH, and mortality. ",
-        "Density of changepoint estimates is denoted by curves at the bottom of each plot. Pre-SSC Period is shaded red, Implementation Period green, and Post-SSC Period blue. ",
-        "(RA: risk-adjusted)."
+        "Changepoint model fitted on 90-day mortality. ",
+        "The dark line is 90-day mortality smoothed using locally estimated regression with a span of ",
+        changepoint.plot.smoothing.duration, 
+        ", with 95% confidence intervals. ",
+        "Lighter lines are a random selection of ",
+        changepoint.n.lines,
+        " models from the posterior sampling. ",
+        "The first changepoint for each of those models are indicated with a point. ",
+        "Colour indicates the effect size, shape indicates the effect direction. ",
+        "Density of the estimates for ",
+        scales::comma(niter(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post)*nchain(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post)),
+        " iterations in ",
+        nchain(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post),
+        " chains are overlaid below (not presented on a density scale)."
       ),
-      aspect.ratio = 0.7071136
+      aspect.ratio = 1.5
     ),
+    
+    publication.figure.daoh.effect.size.plot = generate.publication.figure(
+      name = 'cpEffectSizeDaoh',
+      input.plot = daoh.emp.logit.effect.size.plot,
+      caption = paste0(
+        "Probability density and boxplot of estimates of the effect of the intervention on empirical logit DAOH\u2089\u2080. ",
+        "The effect was not significantly different from zero (p=",
+        scales::pvalue(publication.results.daoh.emp.logit.changepoint$magnitude$p, accuracy = 0.01),
+        ")."
+              ),
+      aspect.ratio = 1.5
+    ),
+    
+    publication.figure.mort.90.day.effect.size.plot = generate.publication.figure(
+      name = 'cpEffectSizeMort90',
+      input.plot = mort.90.day.effect.size.plot,
+      caption = paste0(
+        "Probability density and boxplot of estimates of the effect of the intervention on logit 90-day mortality. ",
+        "The effect was not significantly different from zero (p=",
+        scales::pvalue(publication.results.mort.90.changepoint$magnitude$p, accuracy = 0.01),
+        ")."
+        
+      ),
+      aspect.ratio = 1.5
+    ),
+    
+    publication.figure.SSC.dra.riskgp.plot = generate.publication.figure(
+      name = 'sscDraPlot',
+      input.plot = SSC.dra.riskgp.plot,
+      caption = paste0(
+        "Characteristics of risk groups (deciles) used in direct risk adjustment (DRA). ",
+        "Size of the circle indicates overall number of patients in the risk group across both groups, colour indicates mean DAOH\u2089\u2080. "
+      ),
+      aspect.ratio = 1.4
+    ),
+    
+    publication.figure.SSC.dra.riskgp.group.diff.plot = generate.publication.figure(
+      name = 'sscDraGroupDiffPlot',
+      input.plot = SSC.dra.riskgp.group.diff.plot,
+      caption = paste0(
+        "Difference in risk profile between groups in Surgical Safety Checklist (SSC) cohort analysis (before (Pre) vs after (Post)). ",
+        "Log ratio Pre/Post is indicated by a colour bar (blue more frequent in Pre-SSC group, red more frequent in Post-SSC group, white no difference), ",
+        "and shape (upwards triangle more frequent in Pre-SSC group, downwards triangle more frequent in Post-SSC group, circle no difference). ",
+        "Size of the shape indicates number of patients in the risk group across both groups."
+      ),
+      aspect.ratio = 1.4
+    ),
+    
+    publication.figure.ethnicity.dra.riskgp.group.diff.plot = generate.publication.figure(
+      name = 'ethnicityDraGroupDiffPlot',
+      input.plot = ethnicity.dra.riskgp.group.diff.plot,
+      caption = paste0(
+        "Difference in risk profile between Maori and non-Maori. ",
+        "Log ratio Pre/Post is indicated by a colour bar (blue more frequent in Maori, red more frequent in non-Maori, white no difference), ",
+        "and shape (upwards triangle more frequent in Maori, downwards triangle more frequent in non-Maori, circle no difference). ",
+        "Size of the shape indicates number of patients in the risk group across both groups."
+      ),
+      aspect.ratio = 1.4
+    ),
+    
+    # publication.figure.mortality.time.plot = generate.publication.figure(
+    #   name = 'mortTimePlot',
+    #   input.plot = mortality.time.plot,
+    #   caption = paste0(
+    #     "Mortality rates (30-day and 90-day) per quarter. ",
+    #     "The registered Pre-SSC and Post-SSC periods are shaded red and blue respectively, the Implementation Period is shaded green."
+    #   ),
+    #   aspect.ratio = 1.5
+    # ),
+    # 
+    # 
+    # publication.figure.changepoint.model.with.prior.gradient.change.plot = generate.publication.figure(
+    #   name = 'changepointWithPriorGradient',
+    #   input.plot = changepoint.model.with.prior.gradient.change.plot,
+    #   caption = paste0(
+    #     "Results from the changepoint models fitted to the Extended Period, with regularisation priors of two changepoints, with positive (for DAOH) or negative (for mortality) gradients. ",
+    #     "Percentages of patients equalling or exceeding various quantiles of overall risk-adjusted DAOH, and mortality. ",
+    #     "Density of changepoint estimates is denoted by curves at the bottom of each plot. Pre-SSC Period is shaded red, Implementation Period green, and Post-SSC Period blue. ",
+    #     "(RA: risk-adjusted)."
+    #   ),
+    #   aspect.ratio = 0.7071136
+    # ),
     
     # publication.table.loo.testing = generate.publication.table(
     #   name = 'loo',
@@ -1799,26 +1717,18 @@ checkwho_plan =
     #   caption = paste0("Model weights generated by model averaging via stacking for a model with an upwards inflection in patient outcomes during the SSC implementation period, and a mocel with no changepoint at all.")
     # ),
     
-    publication.table.bayes.testing = generate.publication.table(
-      name = 'bayes',
-      input.table = bayes.testing.ht,
-      caption = paste0(
-        "Results of Bayesian changepoint analysis, including ",
-        "point estimate of first changepoint and 95% credible intervals, and ",
-        "Bayes factors comparing the hypotheses that the first changepoint occurred during the SSC Implementation Period, the Post-SSC Period, or outside either of these periods. Bayes factor is positively associated with probability, so (for example) in the first row it is some 75 times more likely that change occurred outside the Implementation and Post-SSC periods. ",
-        "(RA: Risk-adjusted)."
-      )
-    ),
-    
-    publication.results.demographics = list(
-      n = adhb.theatre.event.dt[`Actual Into Theatre Date Time` >= min.date & `Actual Into Theatre Date Time` <= max.date,.N],
-      n.pre = eligibility.dt[pre.eligible.and.unique == TRUE, .N],
-      n.post = eligibility.dt[post.eligible.and.unique == TRUE, .N],
-      n.pre.post = eligibility.dt[pre.post.eligible.and.unique == TRUE, .N],
-      n.time.series = time.series.figure.dt[,.N],
-      p.maori = time.series.figure.dt[,.N, by = maori.ethnicity][,p := N/sum(N)]
-      
-    ),
+    # publication.table.bayes.testing = generate.publication.table(
+    #   name = 'bayes',
+    #   input.table = bayes.testing.ht,
+    #   caption = paste0(
+    #     "Results of Bayesian changepoint analysis, including ",
+    #     "point estimate of first changepoint and 95% credible intervals, and ",
+    #     "Bayes factors comparing the hypotheses that the first changepoint occurred during the SSC Implementation Period, the Post-SSC Period, or outside either of these periods. Bayes factor is positively associated with probability, so (for example) in the first row it is some 75 times more likely that change occurred outside the Implementation and Post-SSC periods. ",
+    #     "(RA: Risk-adjusted)."
+    #   )
+    # ),
+    # 
+
     
     publication.results.daoh = list(
       # pre.post.riskadj.comparison.w = wilcox.test(daoh.risk.adj ~ SSC, data = pre.post.figure.dt)$statistic,
@@ -1926,6 +1836,9 @@ checkwho_plan =
       ),
       maori.mort.30.reg.or.p = summary(mort.30.maori.regression.model)$coefficients["maori.ethnicityNon-Maori", "Pr(>|z|)"]
     ),
+    
+    
+    publication.results.loo = loo.testing.list,
     
     # report.docx = compile.manuscript(
     #   asset.list = list(publication.table.demographics,

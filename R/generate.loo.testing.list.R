@@ -22,8 +22,8 @@ generate.loo.testing.list <- function(model.list.1,
   for (model.ind in 1:length(model.list.1)) {
     model.name = names(model.list.1)[model.ind]
     
-    loo.models = list(loo.1 = loo::loo(model.list.1[[model.ind]]),
-                      loo.2 = loo::loo(model.list.2[[model.ind]]))
+    loo.models = list(loo.1 = model.list.1[[model.ind]]$loo,
+                      loo.2 = model.list.2[[model.ind]]$loo)
     loo.testing.list[[model.name]][['loo.models']] = loo.models
     
     loo.compare = loo::loo_compare(loo.models[['loo.1']], loo.models[['loo.2']])
@@ -35,6 +35,9 @@ generate.loo.testing.list <- function(model.list.1,
     loo.compare.dt[, weight := weights]
     
     loo.testing.list[[model.name]][['loo.compare']] = loo.compare.dt
+    
+    loo.testing.list[[model.name]]['z'] = loo.compare.dt[model == 'model2', elpd_diff/se_diff]
+    loo.testing.list[[model.name]]['p'] = loo.compare.dt[model == 'model2', 2 * pnorm(elpd_diff/se_diff)]
     
     
   }

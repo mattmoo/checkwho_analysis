@@ -551,7 +551,6 @@ compile.manuscript <- function(asset.list,
       if (!is.na(report.index)) {
         
         if (keyWordExists(manuscript.docx, reference.string)) {
-          print('hi2')
           manuscript.docx = officer::cursor_reach(manuscript.docx,
                                                   keyword = reference.string) %>%
             officer::body_remove() %>%
