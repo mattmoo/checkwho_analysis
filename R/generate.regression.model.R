@@ -31,6 +31,12 @@ generate.regression.model <- function(input.dt,
                family = 'binomial',
                ...)
     
+  } else if (fam == 'bernoulli.identity') {
+    model = glm(formula = form, 
+                data = input.dt,
+                family = bernoulli(link = 'identity'),
+                ...)
+    
   } else {
     
     model = glm(formula = form, 

@@ -51,6 +51,9 @@ required.cran.packages = list(
   # For the report
   "officer",
   
+  #Calculating r-squared
+  "caret",
+  
   'survey'
 )
 

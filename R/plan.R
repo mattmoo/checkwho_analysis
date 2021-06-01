@@ -3,6 +3,7 @@
 derived.input.directory = 'P:/FMHSfiles/SCIENCE/CheckWHO/data/derived'
 base.input.directory = file.path(derived.input.directory, 'encrypted_id_source')
 loo.input.directory = file.path(derived.input.directory, 'vm_calculations/rds')
+mcp.fit.ethnicity.input.directory = file.path(loo.input.directory, 'ethnicity')
 moh.csv.directory = 'moh'
 adhb.csv.directory = 'adhb'
 
@@ -99,16 +100,20 @@ checkwho_plan =
     
     daoh.quantreg.quantiles = c(0.1, 0.25, 0.5, 0.75),
     
-    # Model for mcp changepoint analysis. Binomial model with two changepoints
-    # and autoregression throughout.
-    changepoint.model.func = function(measure) {
-      list(as.formula(paste0(measure, ' | trials(N) ~ 1 + month.numeric')),
-           ~ 0 + month.numeric,
-           ~ 0 + month.numeric)
-    },
+    # # Model for mcp changepoint analysis. Binomial model with two changepoints
+    # # and autoregression throughout.
+    # changepoint.model.func = function(measure) {
+    #   list(as.formula(paste0(measure, ' | trials(N) ~ 1 + month.numeric')),
+    #        ~ 0 + month.numeric,
+    #        ~ 0 + month.numeric)
+    # },
+    # 
+    # changepoint.model.null.func = function(measure) {
+    #   list(as.formula(paste0(measure, ' | trials(N) ~ 1 + month.numeric')))
+    # },
     
-    changepoint.model.null.func = function(measure) {
-      list(as.formula(paste0(measure, ' | trials(N) ~ 1 + month.numeric')))
+    ethnicity.time.series.model.func = function(measure) {
+      
     },
     
     # changepoint.measure.list = c(
@@ -285,7 +290,6 @@ checkwho_plan =
     #   changepoint.prior.dnorm.mortality,
     #   changepoint.prior.dnorm.mortality
     # ),
-    
     # # Priors with a changepoint anywhere except the first and last few months.
     # changepoint.prior.gradient.change.list = list(
     #   changepoint.prior.gradient.change.daoh,
@@ -519,21 +523,21 @@ checkwho_plan =
     SSC.dra.riskgp.plot = generate.dra.riskgp.plot(
       risk.adjusted.regression.dt,
       riskgp.axis.names = riskgp.axis.names,
-      shape.scale = c(1,17)),
+      shape.scale = c(1,14)),
     
     SSC.dra.riskgp.group.diff.plot = draw.dra.riskgp.group.diff.plot(
       risk.adjusted.regression.dt,
       summary.col.name = 'SSC',
       riskgp.col.names = c('SSC.riskgpMORT', 'SSC.riskgpLOS'),
       riskgp.axis.names = riskgp.axis.names,
-      shape.scale = c(1,17)),
+      shape.scale = c(1,12)),
     
     ethnicity.dra.riskgp.group.diff.plot = draw.dra.riskgp.group.diff.plot(
       risk.adjusted.regression.dt,
       summary.col.name = 'maori.ethnicity',
       riskgp.col.names = c('ethnicity.riskgpMORT', 'ethnicity.riskgpLOS'),
       riskgp.axis.names = riskgp.axis.names,
-      shape.scale = c(1,17)),
+      shape.scale = c(1,12)),
     
     SSC.dra.riskgp.daoh.animation = generate.dra.riskgp.daoh.animation(
       risk.adjusted.regression.dt),
@@ -980,13 +984,28 @@ checkwho_plan =
                     mort.90.regression.model.initial)
     ),
     
-    final.mortality.covariates = c(mortality.covariates, unique(mort.interaction.test.dt[pvalue.fdr < 0.05, interaction.term])),
+    final.mortality.covariates = c(mortality.covariates, 
+                                   unique(mort.interaction.test.dt[pvalue.fdr < 0.05, interaction.term])),
+    
+    mort.30.bi.regression.model = generate.regression.model(
+      input.dt = pre.post.figure.dt,
+      outcome = 'mort.30.day',
+      covariates = final.mortality.covariates,
+      family = 'bernoulli.identity'
+    ),
     
     mort.30.regression.model = generate.regression.model(
       input.dt = pre.post.figure.dt,
       outcome = 'mort.30.day',
       covariates = final.mortality.covariates,
       family = 'binomial'
+    ),
+    
+    mort.90.bi.regression.model = generate.regression.model(
+      input.dt = pre.post.figure.dt,
+      outcome = 'mort.90.day',
+      covariates = final.mortality.covariates,
+      family = 'bernoulli.identity'
     ),
     
     mort.90.regression.model = generate.regression.model(
@@ -1207,7 +1226,8 @@ checkwho_plan =
     
     gaussian.emp.logit.daoh.mcp.dt = time.series.figure.dt[, .(
       daoh.emp.logit = daoh.emp.logit,
-      date.numeric = as.integer(daoh.period.start)
+      date.numeric = as.integer(daoh.period.start),
+      ethnicity
     )],
     
 
@@ -1220,13 +1240,13 @@ checkwho_plan =
       file.path(
         loo.input.directory, 
         'gaussian.emp.logit.daoh.mcp.fit.RDS')),
-    
-    
+
     # Taking each patient's mortality as a result from one trial.
     binomial.mort.90.day.mcp.dt = time.series.figure.dt[, .(
       mort.90.day = as.integer(mort.90.day),
       n.follow.up = 1,
-      date.numeric = as.integer(daoh.period.start)
+      date.numeric = as.integer(daoh.period.start),
+      ethnicity
     )],
     
     # Calculated on VM.
@@ -1239,8 +1259,6 @@ checkwho_plan =
         loo.input.directory, 
         'binomial.mort.90.day.mcp.fit.RDS')),
     
-    
-    # Calculated on VM.
     bernoulli.mort.90.day.intervention.changepoint.mcp.fit = readRDS(
       file.path(
         loo.input.directory,
@@ -1249,6 +1267,33 @@ checkwho_plan =
       file.path(
         loo.input.directory, 
         'bernoulli.mort.90.day.mcp.fit.RDS')),
+    
+    # Ethnicity gradient stuff from VM.
+    gaussian.emp.logit.daoh.ethnicity.mcp.fit.list = load.ethnicity.mcp.fit.list(
+      file.paths = list.files(
+        path = mcp.fit.ethnicity.input.directory,
+        pattern = 'emp',
+        full.names = TRUE
+      )
+    ),
+    mort.90.day.ethnicity.mcp.fit.list = load.ethnicity.mcp.fit.list(
+      file.paths = list.files(
+        path = mcp.fit.ethnicity.input.directory,
+        pattern = 'mort',
+        full.names = TRUE
+      )
+    ),
+    
+    gaussian.emp.logit.daoh.ethnicity.mcmc.dt = generate.factor.mcmc.dt(
+      mcp.fit.list = gaussian.emp.logit.daoh.ethnicity.mcp.fit.list,
+      label.col.name = 'Ethnicity',
+      label.factor.order = c("Maori", "European", "Pacific Peoples", "Asian", "Other")
+    ), 
+    mort.90.day.ethnicity.mcmc.dt = generate.factor.mcmc.dt(
+      mcp.fit.list = mort.90.day.ethnicity.mcp.fit.list,
+      label.col.name = 'Ethnicity',
+      label.factor.order = c("Maori", "European", "Pacific Peoples", "Asian", "Other")
+    ), 
     
     changepoint.plot.smoothing.duration = "1 year",
     ribbon.transparency = 0.15,
@@ -1302,17 +1347,59 @@ checkwho_plan =
         labels = function(x) sprintf("%+.2f", x))
     ),
     
+    # Need to try and scale DAOH back onto original data.
+    daoh.scaling.dt = generate.daoh.scaling.dt(smooth.daoh.summary.dt, inverse.emp.logit),
+    daoh.scaling.glm.mod = glm(fit.orig ~ poly(fit.inv, 2), data = daoh.scaling.dt[!is.na(fit.inv)]),
+    daoh.scaling.rsq = caret::postResample(daoh.scaling.dt$ratio, predict(daoh.scaling.glm.mod, newdata = daoh.scaling.dt)),
+    scaled.inverse.emp.logit = function(x) predict(daoh.scaling.glm.mod, data.frame(fit.inv = inverse.emp.logit(x))),
+    
+    # Also needs to be done for the gradient.
+    gradient.scaling.window.size = 50,
+    daoh.gradient.scaling.dt = smooth.daoh.summary.dt[, .(
+      time = time,
+      fit = fit,
+      smooth.duration,
+      roll.dy = frollapply(
+        x = fit,
+        n = gradient.scaling.window.size,
+        FUN = function(x)
+          ((x[gradient.scaling.window.size] - x[1]))
+      ),
+      roll.dx = frollapply(
+        x = time,
+        n = gradient.scaling.window.size,
+        FUN = function(x)
+          ((x[gradient.scaling.window.size] - x[1]))
+      )
+      
+    ), by = measure][!is.na(roll.dy), .(
+      measure,
+      time,
+      fit,
+      smooth.duration,
+      roll.dx,
+      roll.dy,
+      roll.grad = roll.dy/roll.dx)],
+    daoh.gradient.scaling.wide.dt = dcast(
+      data = daoh.gradient.scaling.dt,
+      formula = time + smooth.duration ~ measure,
+      value.var = c('roll.grad', 'fit')
+    ),
+    daoh.gradient.scaling.glm.mod = glm(roll.grad_daoh ~ poly(roll.grad_daoh.emp.logit, 2), data = daoh.gradient.scaling.wide.dt),
+    daoh.gradient.scaling.rsq = caret::postResample(
+      daoh.gradient.scaling.wide.dt$roll.grad_daoh,
+      predict(daoh.gradient.scaling.glm.mod, newdata = daoh.gradient.scaling.wide.dt)
+    ), 
+    gradient.scaled.inverse.emp.logit = function(x) predict(daoh.gradient.scaling.glm.mod, data.frame(roll.grad_daoh.emp.logit = x)),
+    
+    
     daoh.emp.logit.changepoint.plot = draw.changepoint.plot(
       mcp.fit = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit,
       smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
-                                                   measure == 'daoh.emp.logit',
-                                                 .(time,
-                                                   fit = inverse.emp.logit(fit),
-                                                   ci.low = inverse.emp.logit(ci.low),
-                                                   ci.high = inverse.emp.logit(ci.high))],
+                                                   measure == 'daoh'],
       y.scale = scale_y_continuous(
         name = 'DAOH (transformed)',
-        limits = c(77, NA),
+        limits = c(72, NA),
         breaks = seq(0, 90, by = 1)
       ),
       x.time.scale = x.time.scale,
@@ -1320,7 +1407,7 @@ checkwho_plan =
       period.rect.scale = period.rect.scale,
       density.height = 2.5,
       n.lines = changepoint.n.lines,
-      transform.function = inverse.emp.logit,
+      transform.function = scaled.inverse.emp.logit,
       effect.fill.scale = scale_fill_continuous_divergingx(
         name = 'Effect size\n(empirical logit)',
         palette = 'RdBu',
@@ -1491,8 +1578,7 @@ checkwho_plan =
       name = 'daohGroupPlotRiskAdj',
       input.plot = daoh.pre.post.risk.adj.plot,
       caption = paste0(
-        "Distribution of risk-adjusted DAOH\u2089\u2080 for Pre-SSC and Post-SSC periods. ",
-        "Scores from each group are transposed in histograms, with probability density curves overlaid. ",
+        "Distribution of risk-adjusted DAOH\u2089\u2080 for Pre-SSC (grey) and Post-SSC periods (outlined). ",
         "Note the square root transform of y-axis."
       ),
       aspect.ratio = 1.5
@@ -1740,9 +1826,10 @@ checkwho_plan =
       daoh.iqr.time.series = quantile(time.series.figure.dt[,daoh], probs = c(0.25, 0.75)),
       
       daoh.n.zero.time.series = time.series.figure.dt[daoh == 0, .N],
-      daoh.prop.zero.time.series = time.series.figure.dt[daoh == 0, .N]/time.series.figure.dt[, .N],
-      daoh.zero.lived.prop.time.series = time.series.figure.dt[daoh == 0,.SD[mort.90.day == FALSE, .N]/.N],
-      daoh.zero.died.prop.time.series = time.series.figure.dt[daoh == 0,.SD[mort.90.day == TRUE, .N]/.N],
+      daoh.prop.zero.time.series = binconf(time.series.figure.dt[daoh == 0, .N], time.series.figure.dt[, .N]),
+      daoh.zero.died.n.time.series = time.series.figure.dt[daoh == 0,.SD[mort.90.day == TRUE, .N]],
+      daoh.zero.lived.prop.time.series = binconf(time.series.figure.dt[daoh == 0,.SD[mort.90.day == FALSE, .N]], time.series.figure.dt[daoh == 0, .N]),
+      daoh.zero.died.prop.time.series = binconf(time.series.figure.dt[daoh == 0,.SD[mort.90.day == TRUE, .N]], time.series.figure.dt[daoh == 0, .N]),
       
       daoh.stats.pre.post = pre.post.daoh.statistics.list
     ),
@@ -1810,6 +1897,15 @@ checkwho_plan =
                                      time.series.figure.dt[maori.ethnicity == 'Non-Maori', .N]),  
       nonmaori.mort.90.day = binconf(time.series.figure.dt[maori.ethnicity == 'Non-Maori' & mort.90.day == TRUE, .N], 
                                      time.series.figure.dt[maori.ethnicity == 'Non-Maori', .N]), 
+      
+      maori.mort.30.day.n = time.series.figure.dt[maori.ethnicity == 'Maori' & mort.30.day == TRUE, .N],
+      nonmaori.mort.30.day.n = time.series.figure.dt[maori.ethnicity == 'Non-Maori' & mort.30.day == TRUE, .N],
+
+      maori.mort.90.day.n = time.series.figure.dt[maori.ethnicity == 'Maori' & mort.90.day == TRUE, .N],
+      nonmaori.mort.90.day.n = time.series.figure.dt[maori.ethnicity == 'Non-Maori' & mort.90.day == TRUE, .N],
+      
+      nonmaori.total = time.series.figure.dt[maori.ethnicity == 'Non-Maori', .N],
+      maori.total = time.series.figure.dt[maori.ethnicity == 'Maori', .N],
       
       maori.stats = maori.ethnicity.daoh.statistics.list,
       

@@ -21,26 +21,10 @@ draw.changepoint.plot <- function(mcp.fit,
                                   transform.function = NULL,
                                   prior = FALSE) {
   
-  # Sample prior or posterior.
-  if (prior == FALSE) {
-    mcmc = mcp.fit$mcmc_post
-  } else {
-    mcmc = mcp.fit$mcmc_prior
-  }
+
   
-  # Turn MCMC into plottable data.table
-  mcp.fit.to.mcmc.dt = function(mcp.fit) {
-    mcmc.dt = data.table()
-    for (chain.ind in 1:length(mcmc)) {
-      chain.dt = data.table(mcmc[[chain.ind]])
-      chain.dt[, chain := factor(chain.ind)]
-      mcmc.dt = rbindlist(list(mcmc.dt,
-                               chain.dt))
-    }
-    mcmc.dt[,iteration.id := 1:.N]
-    return(mcmc.dt)
-  }
-  mcmc.dt = mcp.fit.to.mcmc.dt(mcp.fit)
+
+  mcmc.dt = mcp.fit.to.mcmc.dt(mcp.fit, prior = prior)
   
   
   facet_by = NULL

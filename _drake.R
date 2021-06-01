@@ -20,17 +20,17 @@ rev3.targets = c(
   'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary',
   'publication.table.mort.reg',
   
-  'publication.figure.daoh.with.mort',
-  'publication.figure.daoh.with.mort.notrans',
-  'publication.figure.daoh.risk.adj',
-  'publication.figure.SSC.dra.riskgp.plot',
-  'publication.figure.SSC.dra.riskgp.group.diff.plot',
-  'publication.figure.ethnicity.dra.riskgp.group.diff.plot',
+  # 'publication.figure.daoh.with.mort',
+  # 'publication.figure.daoh.with.mort.notrans',
+  # 'publication.figure.daoh.risk.adj',
+  # 'publication.figure.SSC.dra.riskgp.plot',
+  # 'publication.figure.SSC.dra.riskgp.group.diff.plot',
+  # 'publication.figure.ethnicity.dra.riskgp.group.diff.plot',
   'publication.figure.daoh.changepoint.plot',
-  'publication.figure.mort.90.day.changepoint.plot',
-  'publication.figure.daoh.effect.size.plot',
-  'publication.figure.mort.90.day.effect.size.plot',
-  'publication.figure.mort.reg',
+  # 'publication.figure.mort.90.day.changepoint.plot',
+  # 'publication.figure.daoh.effect.size.plot',
+  # 'publication.figure.mort.90.day.effect.size.plot',
+  # 'publication.figure.mort.reg',
   
   'publication.results.demographics',
   'publication.results.daoh',
@@ -38,31 +38,25 @@ rev3.targets = c(
   'publication.results.maori',
   'publication.results.daoh.emp.logit.changepoint',
   'publication.results.mort.90.changepoint',
-  'publication.results.loo'
-  # 'daoh.emp.logit.changepoint.plot',
-  # 'mort.90.day.effect.size.plot',
-  # 'smooth.mortality.summary.dt',
-  # 'smooth.daoh.summary.dt'
+  'publication.results.loo',
   
-  
-  # 'binomial.mort.90.day.intervention.changepoint.mcp.fit',
-  # 'binomial.mort.90.day.mcp.fit',
-  # 'bernoulli.mort.90.day.intervention.changepoint.mcp.fit',
-  # 'bernoulli.mort.90.day.mcp.fit',
-  # 'gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit',
-  # 'gaussian.emp.logit.daoh.mcp.fit'
+  'scaled.inverse.emp.logit'
 
-  # 'binomial.daoh.intervention.changepoint.mcp.fit',
-  # 'binomial.daoh.mcp.fit',
-  # 'binomial.mort.90.day.intervention.changepoint.mcp.fit',
-  # 'binomial.mort.90.day.mcp.fit',
 
   
 )
+
+# make(checkwho_plan, c('gaussian.emp.logit.daoh.ethnicity.mcmc.dt',
+#                       'mort.90.day.ethnicity.mcmc.dt'))
+
 # make(checkwho_plan, 'risk.adjusted.regression.dt')
 # p = vis_drake_graph(checkwho_plan)
 # make(checkwho_plan, 'publication.table.rev3.comprehensive.daoh.summary')
-make(checkwho_plan, rev3.targets)
+# make(checkwho_plan, rev3.targets)
+make(checkwho_plan, 'mort.90.bi.regression.model')
+# loadd(daoh.emp.logit.changepoint.plot)
+assaassasa
+
 make(
   checkwho_plan,
   c(
@@ -77,7 +71,6 @@ make(
 )
 
 
-assasa
 # make(checkwho_plan, c('date.status.dt', 'date.status.with.surgery.dt'))
 # make(checkwho_plan, 'pre.post.svy.des')
 # loadd(rev3.targets)
