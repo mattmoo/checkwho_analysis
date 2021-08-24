@@ -12,39 +12,56 @@ drake_config(checkwho_plan,
              lock_envir = FALSE)
 
 rev3.targets = c(
-  'eligibility.figure.numbers.dt',
-  
-  'publication.table.demographics',
-  'publication.table.rev3.comprehensive.daoh.summary',
-  'publication.table.rev3.comprehensive.ethnicity.daoh.summary',
-  'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary',
-  'publication.table.mort.reg',
-  
+  # 'eligibility.figure.numbers.dt',
+  # 
+  # 'publication.table.demographics',
+  # 'publication.table.rev3.comprehensive.daoh.summary',
+  # 'publication.table.rev3.comprehensive.ethnicity.daoh.summary',
+  # 'publication.table.rev3.comprehensive.maori.ethnicity.daoh.summary',
+  # 'publication.table.mort.reg',
+  # 
   # 'publication.figure.daoh.with.mort',
   # 'publication.figure.daoh.with.mort.notrans',
   # 'publication.figure.daoh.risk.adj',
   # 'publication.figure.SSC.dra.riskgp.plot',
   # 'publication.figure.SSC.dra.riskgp.group.diff.plot',
   # 'publication.figure.ethnicity.dra.riskgp.group.diff.plot',
-  'publication.figure.daoh.changepoint.plot',
+  # 'publication.figure.daoh.changepoint.plot',
   # 'publication.figure.mort.90.day.changepoint.plot',
   # 'publication.figure.daoh.effect.size.plot',
   # 'publication.figure.mort.90.day.effect.size.plot',
   # 'publication.figure.mort.reg',
-  
-  'publication.results.demographics',
-  'publication.results.daoh',
-  'publication.results.mortality',
-  'publication.results.maori',
-  'publication.results.daoh.emp.logit.changepoint',
-  'publication.results.mort.90.changepoint',
-  'publication.results.loo',
-  
-  'scaled.inverse.emp.logit'
+  # 
+  # 'publication.results.demographics',
+  # 'publication.results.daoh',
+  # 'publication.results.mortality',
+  # 'publication.results.maori',
+  # 'publication.results.daoh.emp.logit.changepoint',
+  # 'publication.results.daoh.linear.changepoint',
+  # 'publication.results.mort.90.changepoint',
+  # 'publication.results.loo',
+  # 
+  # 'scaled.inverse.emp.logit',
+
 
 
   
 )
+
+pres.targets = c(  'presentation.output.dir',
+                   'pres.figure.aspect.ratio',
+                   'pres.figure.max.width.px',
+                   'pres.figure.width.dpi',
+                   
+                   'presentation.figure.daoh.notrans',
+                   'presentation.figure.daoh.sqrt',
+                   'presentation.figure.daoh.mort.sqrt',
+                   'daoh.pre.post.raw.plot',
+                   
+                   'mort.los.risk.density.with.margins.plot',
+                   'los.risk.density.plot',
+                   'mort.risk.density.plot'
+                   )
 
 # make(checkwho_plan, c('gaussian.emp.logit.daoh.ethnicity.mcmc.dt',
 #                       'mort.90.day.ethnicity.mcmc.dt'))
@@ -52,10 +69,12 @@ rev3.targets = c(
 # make(checkwho_plan, 'risk.adjusted.regression.dt')
 # p = vis_drake_graph(checkwho_plan)
 # make(checkwho_plan, 'publication.table.rev3.comprehensive.daoh.summary')
-# make(checkwho_plan, rev3.targets)
-make(checkwho_plan, 'mort.90.bi.regression.model')
+make(checkwho_plan, pres.targets)
+# make(checkwho_plan, c('daoh.linear.simpler.changepoint.plot',
+#                       'gaussian.linear.daoh.mcp.fit',
+#                       'daoh.linear.effect.size.plot'))
 # loadd(daoh.emp.logit.changepoint.plot)
-assaassasa
+# assaassasa
 
 make(
   checkwho_plan,
@@ -94,7 +113,7 @@ make(
 #   # renderer = av_renderer(file.path(report.output.dir, 'dra_riskgp_daoh_animation.mp4'),
 #   renderer = gifski_renderer(file.path(report.output.dir, 'dra_riskgp_daoh_animation.gif'))
 # )
-
+saasasas
 
 loadd(
   publication.table.demographics,

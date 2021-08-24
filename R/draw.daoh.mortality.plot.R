@@ -2,7 +2,7 @@
 ##'
 ##' @title
 ##' @param input.dt
-draw.daoh.mortality.plot <- function(input.dt, transform.y = TRUE) {
+draw.daoh.mortality.plot <- function(input.dt, transform.y = TRUE, draw.legend = FALSE) {
 
   
   y.scale.labels = function(x)
@@ -80,7 +80,7 @@ draw.daoh.mortality.plot <- function(input.dt, transform.y = TRUE) {
     #                bins=90) +
     # gghighlight(mort.90.day == TRUE) +
     # labs(title=paste("Frequency for Overall DAOH (both groups, n=", nGroup1+nGroup2, ")", sep="")) +
-    labs(x="Days alive and out of hospital (90 days)", y = element_blank()) +
+    labs(x="Days alive and out of hospital", y = element_blank()) +
     # labs(x="Days alive and out of hospital", y="Percentage") +
     # transformedYScale +
     xScale +
@@ -89,8 +89,7 @@ draw.daoh.mortality.plot <- function(input.dt, transform.y = TRUE) {
     scale_fill_grey(start=0.45, end=0.1,
                     name="90-day",
                     breaks=c(0, 1),
-                    labels=c("Alive", "Dead")) + 
-    theme(legend.position = "none") +
+                    labels=c("Alive", "Dead")) +
     ylab("Percentage of cohort")
     # guides(fill=guide_legend()) 
   
@@ -98,6 +97,14 @@ draw.daoh.mortality.plot <- function(input.dt, transform.y = TRUE) {
     p = p + transformedYScale
   } else {
     p = p + notransformedYScale
+  }
+  
+  if (draw.legend) {
+    p = p  + 
+      theme(legend.position = "bottom")
+  } else {
+    p = p  + 
+      theme(legend.position = "none")
   }
   
   return(p)

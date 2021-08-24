@@ -532,6 +532,206 @@ checkwho_plan =
       riskgp.axis.names = riskgp.axis.names,
       shape.scale = c(1,12)),
     
+    # Stuff for presentation
+    predicted.dra.risk.dt = generate.predicted.dra.risk.dt(time.series.figure.dt,
+                                                           SSC.dra.risk.adjust.model.list),
+    
+    scaled.risk.density.limits = c(-3, 3),
+    scaled.risk.density.breaks = c(-2.5, 2.5),
+    scaled.risk.density.labels = c('Lower', 'Higher'),
+    
+    mort.scaled.risk.density.x.scale = scale_x_continuous(
+      name = riskgp.axis.names[1],
+      expand = c(0, 0),
+      limits = scaled.risk.density.limits,
+      breaks = scaled.risk.density.breaks,
+      labels = scaled.risk.density.labels
+    ),
+    los.scaled.risk.density.y.scale = scale_y_continuous(
+      name = riskgp.axis.names[2],
+      expand = c(0, 0),
+      limits = scaled.risk.density.limits,
+      breaks = scaled.risk.density.breaks,
+      labels = scaled.risk.density.labels
+    ),
+    los.scaled.risk.density.x.scale = scale_x_continuous(
+      name = riskgp.axis.names[2],
+      expand = c(0, 0),
+      limits = scaled.risk.density.limits,
+      breaks = scaled.risk.density.breaks,
+      labels = scaled.risk.density.labels
+    ),
+    
+    viridis.palette = 'mako',
+    scale.fill = scale_fill_viridis_c(option = viridis.palette, direction = -1),
+    density.fill = viridis_pal(option = viridis.palette, begin = 0.75, alpha = 0.4)(1),
+    density.colour = viridis_pal(option = viridis.palette, begin = 0.6, alpha = 0.8)(1),
+    
+    dra.quantile.probs = seq(0.0, 1.0, by = 0.1),
+    
+    dra.risk.quantiles.dt = predicted.dra.risk.dt[, .(
+      q = dra.quantile.probs,
+      los.value = quantile(scaled.los, probs = dra.quantile.probs),
+      mort.value = quantile(scaled.mort, probs = dra.quantile.probs)
+    )],
+    
+    theme.no.panel = theme(
+      panel.border = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank()
+    ),
+    
+    theme.no.y = theme(
+      axis.title.y = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank()
+    ),
+    
+    theme.no.x = theme(
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank()
+    ),
+    
+    theme.no.ticks = theme(
+      axis.ticks.x = element_blank(),
+      axis.ticks.y = element_blank()
+    ),
+    
+    mort.los.risk.density.plot = ggplot(predicted.dra.risk.dt, aes(x = scaled.mort, y = scaled.los)) +
+      geom_density_2d_filled(
+        aes(fill = stat(nlevel)),
+        n = 200,
+        bins = 50,
+        show.legend = FALSE
+      ) +
+      scale.fill +
+      mort.scaled.risk.density.x.scale +
+      los.scaled.risk.density.y.scale +
+      theme(axis.text.y = element_text(angle = 90, hjust = 0.5)) + 
+      theme.no.panel +
+      theme.no.ticks,
+    
+    los.risk.density.light.qlines =
+      geom_hline(
+        data = dra.risk.quantiles.dt[!q %in% c(0,1.0)],
+        aes(yintercept = los.value),
+        colour = 'gray70',
+        alpha = .75
+      ), 
+    los.risk.density.dark.qlines =
+      geom_hline(
+        data = dra.risk.quantiles.dt[!q %in% c(0,1.0)],
+        aes(yintercept = los.value),
+        colour = 'gray20',
+        linetype = 'dashed',
+        alpha = .75
+      ), 
+    
+    mort.risk.density.dark.qlines =
+      geom_vline(
+        data = dra.risk.quantiles.dt[!q %in% c(0,1.0)],
+        aes(xintercept = mort.value),
+        colour = 'gray70',
+        alpha = .75
+      ), 
+    mort.risk.density.light.qlines =
+      geom_vline(
+        data = dra.risk.quantiles.dt[!q %in% c(0,1.0)],
+        aes(xintercept = mort.value),
+        colour = 'gray20',
+        linetype = 'dashed',
+        alpha = .75
+      ), 
+    
+    mort.los.risk.density.qlines.plot = 
+      mort.los.risk.density.plot + 
+      los.risk.density.light.qlines +
+      los.risk.density.dark.qlines +
+      mort.risk.density.dark.qlines +
+      mort.risk.density.light.qlines,
+    
+    mort.risk.density.plot = ggplot(predicted.dra.risk.dt, aes(x = scaled.mort)) +
+      geom_histogram(aes(fill = ..count..), colour = density.colour, bins = 100) +
+      mort.scaled.risk.density.x.scale +
+      scale.fill +
+      scale_y_continuous(expand = c(0, 0.01)) +
+      theme.no.y + 
+      theme.no.panel +
+      theme.no.ticks +
+      theme(legend.position = 'none'),
+    
+    los.risk.density.plot = ggplot(predicted.dra.risk.dt, aes(x = scaled.los)) +
+      geom_histogram(aes(fill = ..count..), colour = density.colour, bins = 100) +
+      los.scaled.risk.density.y.scale +
+      scale.fill +
+      scale_y_continuous(expand = c(0, 0.01)) +
+      theme.no.y + 
+      theme.no.panel +
+      theme.no.ticks +
+      theme(legend.position = 'none'),
+    
+    marginal.mort.risk.density.plot = ggplot(predicted.dra.risk.dt, aes(x = scaled.mort)) +
+      geom_histogram(aes(fill = ..count..), colour = density.colour, bins = 100) +
+      mort.scaled.risk.density.x.scale +
+      scale.fill +
+      scale_y_continuous(expand = c(0, 0.01)) +
+      theme.no.x + 
+      theme.no.y + 
+      theme.no.panel +
+      theme.no.ticks +
+      theme(legend.position = 'none'),
+    
+    marginal.los.risk.density.plot = ggplot(predicted.dra.risk.dt, aes(y = scaled.los)) +
+      geom_histogram(aes(fill = ..count..), colour = density.colour, bins = 100) +
+      los.scaled.risk.density.y.scale +
+      scale.fill +
+      scale_x_continuous(expand = c(0, 0.01)) +
+      # ylim(ggplot_build(mort.los.risk.density.plot)$layout$panel_params[[1]]$y.range) +
+      theme.no.x + 
+      theme.no.y + 
+      theme.no.panel +
+      theme.no.ticks +
+      theme(legend.position = 'none'),
+    
+    mort.los.risk.density.with.margins.plot = as.ggplot(
+      egg::ggarrange(
+        marginal.mort.risk.density.plot,
+        ggplot() + theme_minimal(),
+        mort.los.risk.density.plot,
+        marginal.los.risk.density.plot,
+        ncol = 2,
+        nrow = 2,
+        widths = c(5, 1),
+        heights = c(1, 5)
+      )
+    ),
+    
+    mort.los.risk.density.qlines.dots.plot = generate.mort.los.risk.density.qlines.dots.plot(
+      mort.los.risk.density.qlines.plot,
+      risk.adjusted.regression.dt,
+      dra.risk.quantiles.dt,
+      shape.scale = c(5,10)
+    ),
+    
+    mort.los.risk.density.with.margins.qlines.plot = as.ggplot(
+      egg::ggarrange(
+        marginal.mort.risk.density.plot +
+          mort.risk.density.dark.qlines +
+          mort.risk.density.light.qlines,
+        ggplot() + theme_minimal(),
+        mort.los.risk.density.qlines.plot,
+        marginal.los.risk.density.plot +
+          los.risk.density.light.qlines +
+          los.risk.density.dark.qlines,
+        ncol = 2,
+        nrow = 2,
+        widths = c(5, 1),
+        heights = c(1, 5)
+      )
+    ), 
+    
     ethnicity.dra.riskgp.group.diff.plot = draw.dra.riskgp.group.diff.plot(
       risk.adjusted.regression.dt,
       summary.col.name = 'maori.ethnicity',
@@ -601,7 +801,7 @@ checkwho_plan =
     daoh.combined.pre.post.summary.dt = rbindlist(list(
       daoh.risk.adj.pre.post.summary.dt,
       daoh.raw.pre.post.summary.dt
-    )), 
+    ))[,adjustment := factor(adjustment, levels = c('Raw', 'DRA'))], 
     
     SSC.risk.adjustment.plot.animation = plot.daoh.barplot(
       daoh.combined.pre.post.summary.dt,
@@ -613,10 +813,10 @@ checkwho_plan =
       gganimate::transition_states(
         states = adjustment,
         transition_length = 2,
-        state_length = 1,
+        state_length = .5,
         wrap = FALSE
       ) +
-      ease_aes('cubic-in-out'),
+      ease_aes('cubic-in-out') + theme(legend.position = 'none'),
     
     # Draw plots
     period.rect.plot = draw.period.rect.plot(
@@ -630,6 +830,15 @@ checkwho_plan =
     
     period.rect.scale = scale_fill_discrete(
       name = 'Period name'
+    ),
+    
+    period.vline.plot = draw.period.vline.plot(
+      pre.period.start,
+      pre.period.end,
+      post.period.start,
+      post.period.end,
+      ssc.implementation.start,
+      ssc.implementation.end
     ),
     
     # x.time.scale = scale_x_date(
@@ -655,7 +864,7 @@ checkwho_plan =
         to = as.Date(ceiling_date(max.date, unit = 'months')),
         by = "3 months"
       ), 
-      name = element_blank()
+      name = 'Year'
     ), 
     
     y.daoh.scale = scale_y_continuous(
@@ -848,14 +1057,25 @@ checkwho_plan =
       period.rect.plot = period.rect.plot
     ),
     
+    daoh.pre.post.plot.legend = ggplotify::as.ggplot(cowplot::get_legend(plot.daoh.barplot(
+      input.summary.dt = daoh.raw.pre.post.summary.dt,
+      by.group = 'SSC',
+      daoh.col.name = 'daoh'
+    ) + labs(y = 'Percentage of group') + theme(legend.position = "bottom"))),
     
-    daoh.pre.post.raw.plot = plot.daoh.histogram(input.dt = pre.post.figure.dt,
-                                                 by.group = 'SSC',
-                                                 daoh.col.name = 'daoh') + labs(y = 'Percentage of group'),
-
-    daoh.pre.post.risk.adj.plot = plot.daoh.barplot(input.summary.dt = daoh.risk.adj.pre.post.summary.dt,
-                                                    by.group = 'SSC',
-                                                    daoh.col.name = 'daoh') + labs(y = 'Percentage of group'),
+    
+    daoh.pre.post.raw.plot = plot.daoh.barplot(
+      input.summary.dt = daoh.raw.pre.post.summary.dt,
+      by.group = 'SSC',
+      daoh.col.name = 'daoh'
+    ) + labs(y = 'Percentage of group') + theme(legend.position = "none"),
+    
+    daoh.pre.post.risk.adj.plot = plot.daoh.barplot(
+      input.summary.dt = daoh.risk.adj.pre.post.summary.dt,
+      by.group = 'SSC',
+      daoh.col.name = 'daoh'
+    ) + labs(y = 'Percentage of group') + theme(legend.position = "none"),
+    
     
     
     rename.coefficients.list = c(
@@ -1138,7 +1358,7 @@ checkwho_plan =
       models = daoh.regression.models,
       coefs = c('SSC (vs Pre-SSC)' = 'SSCPost'),
       model.names = daoh.quantreg.quantiles,
-      xlab= 'Days alive and out of hospital (90 days)',
+      xlab= 'Days alive and out of hospital',
       legend.title = 'DAOH quantile',
       ylabs = FALSE
     ),
@@ -1147,13 +1367,18 @@ checkwho_plan =
       coefs = c(rename.coefficients.list, rename.interaction.coefficients.list),
       model.names = daoh.quantreg.quantiles,
       groups = c(group.coefficients.list,group.interaction.coefficients.list),
-      xlab= 'Days alive and out of hospital (90 days)',
+      xlab= 'Days alive and out of hospital',
       legend.title = 'DAOH quantile'
     ),
     # A DAOH plot with mortal cases highlighted
     daoh.mortality.plot = draw.daoh.mortality.plot(
       input.dt = time.series.figure.dt,
       transform.y = TRUE
+    ),
+    daoh.mortality.plot.legend = get_legend(draw.daoh.mortality.plot(
+      input.dt = time.series.figure.dt,
+      transform.y = TRUE,
+      draw.legend = TRUE)
     ),
     
     daoh.mortality.notransform.plot = draw.daoh.mortality.plot(
@@ -1240,6 +1465,14 @@ checkwho_plan =
       file.path(
         loo.input.directory, 
         'gaussian.emp.logit.daoh.mcp.fit.RDS')),
+    gaussian.linear.daoh.intervention.changepoint.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory,
+        'gaussian.linear.daoh.intervention.changepoint.mcp.fit.RDS')),
+    gaussian.linear.daoh.mcp.fit = readRDS(
+      file.path(
+        loo.input.directory, 
+        'gaussian.linear.daoh.mcp.fit.RDS')),
 
     # Taking each patient's mortality as a result from one trial.
     binomial.mort.90.day.mcp.dt = time.series.figure.dt[, .(
@@ -1296,9 +1529,9 @@ checkwho_plan =
     ), 
     
     changepoint.plot.smoothing.duration = "1 year",
-    ribbon.transparency = 0.15,
+    ribbon.transparency = 0.1,
     ribbon.colour = grDevices::rgb(0, 0, 0, ribbon.transparency),
-    changepoint.n.lines = 100,
+    changepoint.n.lines = 75,
     
     mort.90.day.changepoint.plot = draw.changepoint.plot(
       mcp.fit = bernoulli.mort.90.day.intervention.changepoint.mcp.fit,
@@ -1323,6 +1556,24 @@ checkwho_plan =
         mid = 0,
         na.value = "black")
     ), 
+    
+    mort.90.day.simpler.changepoint.plot = draw.simpler.changepoint.plot(
+      mcp.fit = bernoulli.mort.90.day.intervention.changepoint.mcp.fit,
+      smooth.summary.dt = smooth.mortality.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
+                                                        measure == 'mort.90.day'],
+      y.scale =
+        scale_y_continuous(
+          name = 'Mortality',
+          limits = c(0, NA),
+          breaks = seq(0, 0.2, by = 0.01),
+          minor_breaks = seq(0, 0.2, by = 0.005),
+          labels = function(x) scales::percent(x, accuracy = 1)
+        ),
+      x.time.scale = x.time.scale,
+      period.vline.plot = period.vline.plot,
+      n.lines = changepoint.n.lines
+    ), 
+    
     
     daoh.changepoint.plot = draw.changepoint.plot(
       mcp.fit = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit,
@@ -1390,7 +1641,29 @@ checkwho_plan =
       daoh.gradient.scaling.wide.dt$roll.grad_daoh,
       predict(daoh.gradient.scaling.glm.mod, newdata = daoh.gradient.scaling.wide.dt)
     ), 
+    
     gradient.scaled.inverse.emp.logit = function(x) predict(daoh.gradient.scaling.glm.mod, data.frame(roll.grad_daoh.emp.logit = x)),
+    
+    
+    gaussian.linear.daoh.lines.dt = generate.lines.dt(gaussian.linear.daoh.intervention.changepoint.mcp.fit,
+                                                      n.lines = 500,
+                                                      prior = FALSE), 
+    
+    gaussian.linear.daoh.changepoint.dt = generate.changepoint.dt(gaussian.linear.daoh.lines.dt,
+                                                                  target.scaled.deflection.size = NULL,
+                                                                  n.lines = 500),
+    
+    gaussian.linear.daoh.high.changepoint.dt = generate.changepoint.dt(gaussian.linear.daoh.lines.dt,
+                                                                  target.scaled.deflection.size = 0.35,
+                                                                  n.lines = 500),
+    
+    gaussian.linear.daoh.low.changepoint.dt = generate.changepoint.dt(gaussian.linear.daoh.lines.dt,
+                                                                  target.scaled.deflection.size = -0.3,
+                                                                  n.lines = 500),
+    
+    gaussian.linear.daoh.mid.changepoint.dt = generate.changepoint.dt(gaussian.linear.daoh.lines.dt,
+                                                                      target.scaled.deflection.size = 0,
+                                                                      n.lines = 500),
     
     
     daoh.emp.logit.changepoint.plot = draw.changepoint.plot(
@@ -1416,25 +1689,144 @@ checkwho_plan =
         labels = function(x) sprintf("%+.2f", x))
     ), 
     
+    daoh.emp.logit.simpler.changepoint.plot = draw.simpler.changepoint.plot(
+      mcp.fit = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit,
+      smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
+                                                   measure == 'daoh'],
+      y.scale = scale_y_continuous(
+        name = 'DAOH',
+        limits = c(72, NA),
+        breaks = seq(0, 90, by = 1)
+      ),
+      x.time.scale = x.time.scale,
+      period.vline.plot = period.vline.plot,
+      n.lines = changepoint.n.lines,
+      transform.function = scaled.inverse.emp.logit
+    ), 
+    
+    daoh.linear.simpler.changepoint.plot = draw.simpler.changepoint.plot(
+      mcp.fit = gaussian.linear.daoh.intervention.changepoint.mcp.fit,
+      smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
+                                                   measure == 'daoh'],
+      y.scale = scale_y_continuous(
+        name = "Days alive and out of hospital",
+        limits = c(72, NA),
+        breaks = seq(0, 90, by = 1)
+      ),
+      x.time.scale = x.time.scale,
+      period.vline.plot = period.vline.plot,
+      n.lines = changepoint.n.lines
+    ), 
+    
+    # draw.presentation.changepoint.plot.2 = function(changepoint.dt = gaussian.linear.daoh.changepoint.dt,
+    #                                                 draw.points = FALSE,
+    #                                                 draw.period = TRUE,
+    #                                                 draw.smooth.line = TRUE,
+    #                                                 draw.lines = TRUE,
+    #                                                 draw.triangle = FALSE,
+    #                                                 n.lines = n.lines) {
+    #   draw.presentation.changepoint.plot(
+    #     mcp.fit = gaussian.linear.daoh.intervention.changepoint.mcp.fit,
+    #     smooth.summary.dt = smooth.daoh.summary.dt[smooth.duration == changepoint.plot.smoothing.duration &
+    #                                                  measure == 'daoh'],
+    #     lines.dt = gaussian.linear.daoh.lines.dt,
+    #     changepoint.dt = gaussian.linear.daoh.changepoint.dt,
+    #     draw.points = draw.points,
+    #     draw.period = draw.period,
+    #     draw.smooth.line = draw.smooth.line,
+    #     draw.lines = draw.lines,
+    #     draw.triangle = draw.triangle,
+    #     # target.scaled.deflection.size.vector = target.scaled.deflection.size.vector,
+    #     period.rect.plot = period.rect.plot,
+    #     period.rect.scale = period.rect.scale,
+    #     # y.scale = NULL,
+    #     x.time.scale = x.time.scale,
+    #     n.lines = n.lines,
+    #     ribbon.transparency = 0.15,
+    #     ribbon.colour = grDevices::rgb(0, 0, 0, ribbon.transparency),
+    #     # effect.fill.scale = NULL,
+    #     # transform.function = NULL,
+    #     prior = FALSE)
+    #     
+    # },
+    # 
+    # 
+    # presentation.daoh.changepoint.plot = draw.presentation.changepoint.plot.2(
+    #   draw.points = FALSE,
+    #   draw.period = TRUE,
+    #   draw.smooth.line = TRUE,
+    #   draw.lines = FALSE,
+    #   draw.triangle = FALSE
+    # ), 
+    # 
+    # presentation.daoh.high.changepoint.plot = draw.presentation.changepoint.plot.2(
+    #   changepoint.dt = gaussian.linear.daoh.high.changepoint.dt,
+    #   draw.points = FALSE,
+    #   draw.period = TRUE,
+    #   draw.smooth.line = TRUE,
+    #   draw.lines = TRUE,
+    #   draw.triangle = FALSE
+    # ), 
+    
+    # presentation.daoh.high.triangle.changepoint.plot = draw.presentation.changepoint.plot.2(
+    #   draw.points = FALSE,
+    #   draw.period = TRUE,
+    #   draw.smooth.line = TRUE,
+    #   draw.lines = TRUE,
+    #   draw.triangle = TRUE,
+    #   target.scaled.deflection.size.vector = 0.35
+    # ), 
+    # 
+    # presentation.daoh.low.triangle.changepoint.plot = draw.presentation.changepoint.plot.2(
+    #   draw.points = FALSE,
+    #   draw.period = TRUE,
+    #   draw.smooth.line = TRUE,
+    #   draw.lines = TRUE,
+    #   draw.triangle = TRUE,
+    #   target.scaled.deflection.size.vector = c(0.35, -0.3)
+    # ), 
+    # 
+    # presentation.daoh.all.triangle.changepoint.plot = draw.presentation.changepoint.plot.2(
+    #   draw.points = FALSE,
+    #   draw.period = TRUE,
+    #   draw.smooth.line = TRUE,
+    #   draw.lines = TRUE,
+    #   draw.triangle = TRUE,
+    #   n.lines = 20
+    # ), 
+    
+    box.scale = 0.1,
+    
     mort.90.day.effect.size.plot = draw.effect.size.plot(
       mcp.fit = bernoulli.mort.90.day.intervention.changepoint.mcp.fit,
       prior = FALSE,
-      x.label = 'Effect size (logit)'
+      hist.breaks = log(seq(0.025,10,by=0.025)),
+      box.scale = box.scale,
+      x.scale = scale_x_continuous(name = 'Effect size (odds ratio)', breaks = log(seq(0.1,10,by=0.1)), labels = exp)
     ),
     
     daoh.emp.logit.effect.size.plot = draw.effect.size.plot(
       mcp.fit = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit,
       prior = FALSE,
-      x.label = 'Effect size (empirical logit)'
+      box.scale = box.scale,
+      hist.breaks = (seq(-10,10,by=0.125)),
+      x.scale = scale_x_continuous(name = 'Effect size (empirical logit)', breaks = seq(0.1,10,by=0.1))
+    ),
+    
+    daoh.linear.effect.size.plot = draw.effect.size.plot(
+      mcp.fit = gaussian.linear.daoh.intervention.changepoint.mcp.fit,
+      prior = FALSE,
+      box.scale = box.scale,
+      x.scale = scale_x_continuous(name = "Effect size (days alive and out of hospital)", breaks = seq(-10,10,by=0.5))
     ),
 
     # Test the fit of the model with prior of uniform likelihood of intervention
     # during implementation vs one with no change points at all.
     loo.testing.list = generate.loo.testing.list(
       list('90-day mortality' = bernoulli.mort.90.day.mcp.fit,
-           'DAOH' = gaussian.emp.logit.daoh.mcp.fit),
+           'DAOH' = gaussian.linear.daoh.mcp.fit),
       list('90-day mortality' = bernoulli.mort.90.day.intervention.changepoint.mcp.fit,
-           'DAOH' = gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit)
+           'DAOH' = gaussian.linear.daoh.intervention.changepoint.mcp.fit)
     ),
 
     # # Generate a table for presenting LOO results.
@@ -1485,6 +1877,10 @@ checkwho_plan =
     
     publication.results.daoh.emp.logit.changepoint = generate.mcp.results.list(
       gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit
+    ),
+    
+    publication.results.daoh.linear.changepoint = generate.mcp.results.list(
+      gaussian.linear.daoh.intervention.changepoint.mcp.fit
     ),
     
     publication.results.mort.90.changepoint = generate.mcp.results.list(
@@ -1673,10 +2069,10 @@ checkwho_plan =
     # 
     publication.figure.daoh.changepoint.plot = generate.publication.figure(
       name = 'daohChangepoint',
-      input.plot = daoh.emp.logit.changepoint.plot,
+      input.plot = daoh.linear.simpler.changepoint.plot,
       caption = paste0(
         "Changepoint model fitted on empirical logit DAOH\u2089\u2080. ",
-        "The dark line is empirical logit DAOH\u2089\u2080 smoothed using locally estimated regression with a span of ",
+        "The dark line is DAOH\u2089\u2080 smoothed using locally estimated regression with a span of ",
         changepoint.plot.smoothing.duration, 
         ", with 95% confidence intervals. ",
         "Lighter lines are a random selection of ",
@@ -1685,9 +2081,9 @@ checkwho_plan =
         "The first changepoint for each of those models are indicated with a point. ",
         "Colour indicates the effect size, shape indicates the effect direction. ",
         "Density of the estimates for ",
-        scales::comma(niter(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post)*nchain(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post)),
+        scales::comma(niter(gaussian.linear.daoh.intervention.changepoint.mcp.fit$mcmc_post)*nchain(gaussian.linear.daoh.intervention.changepoint.mcp.fit$mcmc_post)),
         " iterations in ",
-        nchain(gaussian.emp.logit.daoh.intervention.changepoint.mcp.fit$mcmc_post),
+        nchain(gaussian.linear.daoh.intervention.changepoint.mcp.fit$mcmc_post),
         " chains are overlaid below (not presented on a density scale)."
       ),
       aspect.ratio = 1.5
@@ -1695,7 +2091,7 @@ checkwho_plan =
     
     publication.figure.mort.90.day.changepoint.plot = generate.publication.figure(
       name = 'mort90Changepoint',
-      input.plot = mort.90.day.changepoint.plot,
+      input.plot = mort.90.day.simpler.changepoint.plot,
       caption = paste0(
         "Changepoint model fitted on 90-day mortality. ",
         "The dark line is 90-day mortality smoothed using locally estimated regression with a span of ",
@@ -1717,14 +2113,14 @@ checkwho_plan =
     
     publication.figure.daoh.effect.size.plot = generate.publication.figure(
       name = 'cpEffectSizeDaoh',
-      input.plot = daoh.emp.logit.effect.size.plot,
+      input.plot = daoh.linear.effect.size.plot,
       caption = paste0(
         "Probability density and boxplot of estimates of the effect of the intervention on empirical logit DAOH\u2089\u2080. ",
         "The effect was not significantly different from zero (p=",
-        scales::pvalue(publication.results.daoh.emp.logit.changepoint$magnitude$p, accuracy = 0.01),
+        scales::pvalue(publication.results.daoh.linear.changepoint$magnitude$p, accuracy = 0.01),
         ")."
               ),
-      aspect.ratio = 1.5
+      aspect.ratio = 2.2
     ),
     
     publication.figure.mort.90.day.effect.size.plot = generate.publication.figure(
@@ -1737,7 +2133,7 @@ checkwho_plan =
         ")."
         
       ),
-      aspect.ratio = 1.5
+      aspect.ratio = 2.2
     ),
     
     publication.figure.SSC.dra.riskgp.plot = generate.publication.figure(
@@ -1935,6 +2331,67 @@ checkwho_plan =
     
     
     publication.results.loo = loo.testing.list,
+    
+    presentation.output.dir = 'P:/FMHSfiles/SCIENCE/CheckWHO/presentations/011-CheckWHO_AARM/assets',
+    
+    pres.figure.aspect.ratio = 2,
+    pres.figure.max.width.px = 1900,
+    pres.figure.max.height.px = 1000,
+    pres.figure.dpi = 300,
+    pres.fps = 60,
+    
+    presentation.figure.daoh.notrans = draw.presentation.figure.daoh(
+      input.summary.dt = time.series.figure.dt[,.N,by = .(daoh)][,prop := N/sum(N)],
+      y.scale.root = 1,
+      y.scale = scale_y_continuous(
+        name = NULL,
+        labels = function(x)
+          sprintf("%0.2g%%", round(x * 100, digits = 5)),
+        minor_breaks = seq(from = 0, to = 1, by = 0.01),
+        breaks = seq(from = 0.05, to = 1, by = 0.05),
+        expand = c(0.001, 0.001),
+        limits = c(0, .25)
+      )
+    ), 
+    
+    presentation.figure.daoh.sqrt = draw.presentation.figure.daoh(
+      input.summary.dt = time.series.figure.dt[,.N,by = .(daoh)][,prop := N/sum(N)],
+      y.scale.root = 2,
+      y.scale = scale_y_continuous(
+        name = NULL,
+        labels = function(x)
+          sprintf("%0.2g%%", round(x * 100, digits = 5)),
+        minor_breaks = NULL,
+        breaks = c(0,
+                   0.001,
+                   0.0025,
+                   0.005,
+                   0.01,
+                   0.02,
+                   0.03,
+                   0.04,
+                   0.05,
+                   0.075,
+                   seq(from = 0.1, to = 1, by = 0.05)),
+        expand = c(0.001, 0.001),
+        limits = c(0, .25)
+      )
+    ),
+    
+    presentation.figure.daoh.mort.sqrt = daoh.mortality.plot +
+      ylab(NULL) +
+      scale_x_continuous(breaks = seq(0, 90, by = 15),
+                         minor_breaks = seq(0, 90, by = 5),
+                         expand = c(0.01, 0.1),
+                         limits = c(-0.5,90.5)),
+    
+    # presentation.figure.daoh.with.mort = generate.publication.figure(
+    #   name = 'rawPlot_pres',
+    #   input.plot = daoh.mortality.plot,
+    #   aspect.ratio = 1.5
+    # ),
+    #
+    presentation.figure.mcp.example = generate.presentation.figure.mcp.example()
     
     # report.docx = compile.manuscript(
     #   asset.list = list(publication.table.demographics,

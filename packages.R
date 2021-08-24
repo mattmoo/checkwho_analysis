@@ -25,6 +25,7 @@ required.cran.packages = list(
   "forcats",
   "RColorBrewer",
   "colorspace",
+  "ggplotify",
   
   "Hmisc",
   "stringr",
